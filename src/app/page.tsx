@@ -1,0 +1,46 @@
+import { portfolio as data } from "@/data/portfolio";
+import { Cursor } from "@/components/overlays/Cursor";
+import { Toast } from "@/components/overlays/Toast";
+import { PageTransition } from "@/components/overlays/PageTransition";
+import { Intro } from "@/components/overlays/Intro";
+import { FloatingCard } from "@/components/overlays/FloatingCard";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
+import { Hero } from "@/components/sections/Hero";
+import { Marquee } from "@/components/sections/Marquee";
+import { Work } from "@/components/sections/work/Work";
+import { CloseUp } from "@/components/sections/CloseUp";
+import { Hello } from "@/components/sections/Hello";
+import { MotionEngine } from "@/components/motion/MotionEngine";
+
+export default function HomePage() {
+  return (
+    <>
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
+
+      {/* fixed layers */}
+      <Cursor />
+      <Toast />
+      <PageTransition />
+      <Intro brand={data.brand} role={data.role} place={data.place} />
+
+      <Header brand={data.brand} place={data.place} nav={data.nav} />
+
+      <main id="main" tabIndex={-1}>
+        <Hero heroLines={data.heroLines} role={data.role} place={data.place} hero={data.hero} />
+        <Marquee items={data.marquee} />
+        <Work projects={data.projects} work={data.work} toasts={data.toasts} artLabel={data.artLabel} />
+        <CloseUp closeUps={data.closeUps} closeSection={data.closeSection} toasts={data.toasts} artLabel={data.artLabel} />
+        <Hello hello={data.hello} />
+        <Footer footer={data.footer} place={data.place} toasts={data.toasts} />
+      </main>
+
+      {/* outside <main>: main is transformed during transitions */}
+      <FloatingCard projects={data.projects} artLabel={data.artLabel} />
+
+      <MotionEngine data={data} />
+    </>
+  );
+}

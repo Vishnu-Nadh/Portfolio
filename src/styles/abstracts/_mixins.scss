@@ -1,0 +1,43 @@
+@use "tokens" as *;
+
+// ---------- media ----------
+@mixin mobile {
+  @media (max-width: $bp-mobile) { @content; }
+}
+
+@mixin tablet {
+  @media (max-width: $bp-tablet) { @content; }
+}
+
+@mixin motion-ok {
+  @media (prefers-reduced-motion: no-preference) { @content; }
+}
+
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) { @content; }
+}
+
+// ---------- type ----------
+// small uppercase monospace label used all over the page
+@mixin mono-label($size: 12px, $tracking: 0.06em) {
+  font-family: var(--font-mono);
+  font-size: $size;
+  letter-spacing: $tracking;
+  text-transform: uppercase;
+}
+
+// ---------- layout ----------
+// horizontal page gutters that respect notches
+@mixin gutters {
+  padding-left: var(--gl);
+  padding-right: var(--gr);
+}
+
+@mixin pinned-sides {
+  left: var(--gl);
+  right: var(--gr);
+}
+
+@mixin safe-bottom($base) {
+  bottom: calc(#{$base} + env(safe-area-inset-bottom, 0px));
+}

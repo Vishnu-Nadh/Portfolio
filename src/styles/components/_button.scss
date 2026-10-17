@@ -1,0 +1,21 @@
+@use "abstracts" as *;
+
+.btn {
+  display: inline-block;
+  padding: 18px 28px;
+  border: 1px solid var(--outline);
+  border-radius: $radius-pill;
+  @include mono-label;
+  text-align: center;
+  transition: color 0.3s, border-color 0.3s, background 0.3s;
+
+  &:hover { color: var(--accent); border-color: var(--accent); }
+
+  &--solid {
+    background: var(--accent);
+    color: var(--on-accent);
+    border-color: var(--accent);
+
+    &:hover { color: var(--on-accent); background: var(--accent-2); border-color: var(--accent-2); }
+  }
+}

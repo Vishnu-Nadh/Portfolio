@@ -1,0 +1,33 @@
+.foot {
+  padding: clamp(80px, 16vh, 180px) var(--gr) calc(28px + env(safe-area-inset-bottom, 0px)) var(--gl);
+  border-top: 1px solid var(--hair);
+
+  &__cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 36px;
+  }
+
+  &__big {
+    font-size: clamp(48px, 10vw, 180px);
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    font-variation-settings: "wdth" 75, "wght" 780;
+    max-width: 12ch;
+  }
+
+  &__bar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 16px 28px;
+    margin-top: clamp(64px, 12vh, 140px);
+    padding-top: 20px;
+    border-top: 1px solid var(--hair);
+
+    button:hover,
+    a:hover { color: var(--accent); }
+  }
+}

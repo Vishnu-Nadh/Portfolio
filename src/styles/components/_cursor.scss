@@ -1,0 +1,42 @@
+@use "abstracts" as *;
+
+.cur-dot,
+.cur-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9800;
+  pointer-events: none;
+  display: none;
+  transform: translate(-200px, -200px);
+}
+
+.cur-dot {
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.cur-ring {
+  z-index: 9790;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  border: 1px solid var(--cursor-ring);
+  align-items: center;
+  justify-content: center;
+  @include mono-label(11px);
+  color: var(--on-accent);
+  will-change: transform;
+  transition: background 0.25s, border-color 0.25s, opacity 0.3s;
+}
+
+// the native cursor is hidden only when the custom one is live (fine pointer + motion on)
+body[data-nocursor],
+body[data-nocursor] * { cursor: none !important; }
+body[data-nocursor] .cur-dot { display: block; }
+body[data-nocursor] .cur-ring { display: flex; }
+body[data-nocursor] input,
+body[data-nocursor] textarea { cursor: text !important; }

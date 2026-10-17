@@ -1,0 +1,169 @@
+@use "abstracts" as *;
+
+.work {
+  padding: clamp(80px, 14vh, 160px) var(--gr) clamp(80px, 14vh, 160px) var(--gl);
+
+  &__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  &__head-end { display: flex; align-items: center; gap: 24px; }
+
+  &__pause {
+    font: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    color: inherit;
+    margin: -16px 0;
+    padding: 16px 0;
+
+    &:hover { color: var(--accent); }
+  }
+
+  &__grid {
+    --dw: clamp(320px, 30vw, 460px);
+    --wgap: clamp(32px, 4vw, 64px);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) var(--dw);
+    gap: var(--wgap);
+    align-items: stretch;
+  }
+
+  &__end { border-top: 1px solid var(--hair); }
+  &__col { position: relative; }
+}
+
+.row {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  grid-template-areas: "num name year" ". meta meta";
+  align-content: center;
+  align-items: baseline;
+  gap: 16px clamp(12px, 2vw, 28px);
+  min-height: 40vh;
+  padding: clamp(20px, 3vw, 34px) 0;
+  border-top: 1px solid var(--hair);
+  transition: padding 0.6s var(--ease-out), color 0.3s;
+
+  /* accent fill that wipes up from the bottom and bleeds to the page edge; driven by .is-hot (hover or keyboard focus) */
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: 0 calc(var(--wgap) / -2) 0 calc(var(--gl) * -1);
+    background: var(--accent);
+    transform: scaleY(0);
+    transform-origin: center bottom;
+    transition: transform 0.7s var(--ease-out);
+    pointer-events: none;
+  }
+
+  &__num {
+    grid-area: num;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--label);
+    transition: color 0.4s var(--ease-out);
+  }
+
+  &.is-focus &__num { color: var(--accent); }
+
+  &__name {
+    grid-area: name;
+    min-width: 0;
+    white-space: nowrap;
+    font-size: clamp(32px, 4.8vw, 92px);
+    line-height: 0.92;
+    letter-spacing: -0.02em;
+    font-variation-settings: var(--fvs-row);
+  }
+
+  &__line { display: block; }
+
+  &__year {
+    grid-area: year;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--label);
+    transition: color 0.5s;
+  }
+
+  &__arrow {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    transition: transform 0.6s var(--ease-out);
+  }
+
+  &__meta {
+    grid-area: meta;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+    @include mono-label;
+    color: var(--label);
+  }
+
+  &__tag { color: var(--accent); }
+
+  &__cta {
+    margin-left: auto;
+    color: var(--text);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+
+  &.is-focus &__cta { opacity: 1; transition: opacity 0.5s var(--ease-out) 0.15s; }
+
+  @include motion-ok {
+    &__cta { transform: translateX(-8px); transition: opacity 0.25s, transform 0.25s var(--ease-out); }
+    &.is-focus &__cta { transform: none; transition: opacity 0.5s var(--ease-out) 0.15s, transform 0.7s var(--ease-out) 0.15s; }
+  }
+
+  /* hot row: dark text on the accent fill, content nudges right, arrow turns from diagonal to horizontal */
+  &.is-hot { color: var(--on-accent); padding-left: 28px; }
+  &.is-hot::before { transform: scaleY(1); }
+  &.is-hot &__num,
+  &.is-hot &__year,
+  &.is-hot &__meta,
+  &.is-hot &__tag,
+  &.is-hot &__cta { color: var(--on-accent); }
+  &.is-hot &__arrow { transform: rotate(45deg); }
+}
+
+@include tablet {
+  .work__grid { --dw: clamp(220px, 28vw, 300px); }
+}
+
+@include mobile {
+  .work__grid { grid-template-columns: minmax(0, 1fr); gap: 0; --wgap: 0px; }
+  .row::before { right: calc(var(--gr) * -1); }
+  .work__col {
+    order: -1;
+    position: sticky;
+    top: calc(64px + env(safe-area-inset-top, 0px));
+    z-index: 5;
+    align-self: start;
+    padding: 6px 0 12px;
+    background: var(--bg);
+  }
+  .row { grid-template-columns: 28px minmax(0, 1fr) auto; column-gap: 14px; min-height: 40svh; }
+  .row__name { font-size: 9vw; }
+  .work__years { display: none; }
+}
+
+@include reduced-motion {
+  .row,
+  .row__cta { transition: none; }
+}

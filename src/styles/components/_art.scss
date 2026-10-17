@@ -1,0 +1,68 @@
+@use "abstracts" as *;
+
+.card {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 60;
+  width: 320px;
+  height: 400px;
+  border-radius: $radius;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border: 1px solid var(--hair);
+    border-radius: $radius;
+  }
+
+  @include mobile { display: none; }
+}
+
+/* image swap: the active layer unclips top to bottom while its art settles from a 1.15 zoom; the others clip away */
+.layer {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 0.8s var(--ease-out);
+
+  .art { transform: scale(1.15); transition: transform 0.8s var(--ease-out); }
+
+  &.is-on { z-index: 2; clip-path: inset(0 0 0 0); }
+  &.is-on .art { transform: none; }
+
+  @include reduced-motion { transition: none; }
+}
+
+.art {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 18px;
+  color: rgba(255, 255, 255, 0.92);
+
+  &__num {
+    font-size: clamp(72px, 9vw, 150px);
+    line-height: 0.8;
+    font-variation-settings: "wdth" 70, "wght" 850;
+    letter-spacing: -0.03em;
+    mix-blend-mode: overlay;
+    opacity: 0.9;
+  }
+
+  &__tag {
+    @include mono-label(10px, 0.08em);
+    opacity: 0.75;
+  }
+}
+
+.card .art__num { font-size: 120px; }

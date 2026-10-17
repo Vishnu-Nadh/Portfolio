@@ -1,0 +1,100 @@
+@use "abstracts" as *;
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 16px;
+  padding: calc(18px + env(safe-area-inset-top, 0px)) var(--gr) 18px var(--gl);
+  background: linear-gradient(var(--bg) 10%, transparent);
+
+  &__status { display: flex; gap: 8px; }
+
+  &__links {
+    display: flex;
+    align-items: center;
+    justify-self: end;
+    gap: clamp(14px, 2.4vw, 32px);
+    font-size: 15px;
+  }
+
+  &__link {
+    padding: 6px 0;
+    position: relative;
+
+    &::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 2px;
+      height: 1px;
+      background: currentColor;
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.5s var(--ease-out);
+    }
+
+    &:hover::after { transform: scaleX(1); transform-origin: left; }
+  }
+
+  &__cta {
+    padding: 9px 16px;
+    border: 1px solid var(--outline);
+    border-radius: $radius-pill;
+    @include mono-label;
+    transition: color 0.3s, border-color 0.3s;
+
+    &:hover { color: var(--accent); border-color: var(--accent); }
+  }
+
+  @include mobile {
+    grid-template-columns: 1fr auto;
+
+    &__status,
+    &__link { display: none; }
+  }
+}
+
+.logo {
+  display: inline-flex;
+  align-items: baseline;
+  justify-self: start;
+  font-size: 22px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+
+  &__first { text-transform: uppercase; font-variation-settings: var(--fvs-display); }
+  &__rest { font-style: italic; font-variation-settings: "wdth" 110, "wght" 250; }
+
+  &__mark {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 0.8em;
+    height: 0.95em;
+    margin: 0 0.04em 0 0.1em;
+    background: var(--accent);
+    color: var(--on-accent);
+    overflow: hidden;
+    font-style: italic;
+    font-variation-settings: "wdth" 110, "wght" 300;
+    align-self: center;
+  }
+
+  &__fill {
+    position: absolute;
+    inset: 0;
+    background: var(--text);
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+
+  &__ch { position: relative; }
+}

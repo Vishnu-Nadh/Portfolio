@@ -1,0 +1,82 @@
+/* =====================================================================
+   THEME TOKENS: the one place to restyle the site.
+   Every map below is emitted as CSS custom properties on :root
+   (see base/_root.scss), so components and the motion engine
+   read them as var(--name). Edit a value here and it applies everywhere.
+   ===================================================================== */
+@use "sass:color";
+@use "sass:math";
+
+// ---------- palette ----------
+// "Ultraviolet": hot pink leads, amber answers, over a violet-tinted near-black.
+// Swap these four to re-theme the whole site.
+$primary: #0b0810; // page background, and the dark text on accent fills
+$ink: #f6f0f4; // body text, hairlines and outlines (at low alpha)
+$accent: #ff4d8d; // the accent (CTAs, row fill, cursor, intro, transitions)
+$accent-2: #ffb547; // solid button hover
+
+// Mixes $ink into $primary by $weight, rounded to whole RGB channels (emits clean hex).
+@function tint($weight) {
+  $c: color.mix($ink, $primary, $weight);
+  @return rgb(
+    math.round(color.channel($c, "red", $space: rgb)),
+    math.round(color.channel($c, "green", $space: rgb)),
+    math.round(color.channel($c, "blue", $space: rgb))
+  );
+}
+
+// ---------- colour roles ----------
+// Neutrals are mixed from $ink + $primary so they keep the background's tint.
+$colors: (
+  "bg": $primary,
+  "surface": tint(6%),
+  "text": $ink,
+  "muted": tint(80%),
+  "label": tint(62%),
+  "faint": tint(40%),
+  "hair": rgba($ink, 0.12),
+  "outline": rgba($ink, 0.26),
+  "accent": $accent,
+  "accent-2": $accent-2,
+  "on-accent": $primary,
+  // idle cursor ring border (also used by the motion engine)
+  "cursor-ring": rgba($ink, 0.5),
+);
+
+// accent -> accent-2 blends, used on the progress bar, marquee diamonds and transition bars
+$gradients: (
+  "gradient": linear-gradient(90deg, $accent, $accent-2),
+  "gradient-diag": linear-gradient(135deg, $accent, $accent-2),
+);
+
+$color-scheme: dark;
+
+// ---------- type ----------
+// --font-archivo / --font-geist-mono are injected by next/font in app/layout.tsx
+$fonts: (
+  "font-sans": (var(--font-archivo), "Archivo", "Helvetica Neue", Arial, sans-serif),
+  "font-mono": (var(--font-geist-mono), "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace),
+);
+
+// variable-font presets (Archivo wdth / wght axes)
+$font-variations: (
+  "fvs-display": ('"wdth" 70, "wght" 800'),
+  "fvs-row": ('"wdth" 88, "wght" 700'),
+  "fvs-italic": ('"wdth" 115, "wght" 250'),
+);
+
+// ---------- motion ----------
+// also read at runtime by the motion engine for Web Animations
+$easings: (
+  "ease-out": cubic-bezier(0.16, 1, 0.3, 1),
+  "ease-io": cubic-bezier(0.76, 0, 0.24, 1),
+);
+
+// ---------- layout ----------
+$gutter: clamp(20px, 4vw, 56px);
+$radius: 6px;
+$radius-pill: 100px;
+
+// ---------- breakpoints ----------
+$bp-tablet: 1100px;
+$bp-mobile: 700px;

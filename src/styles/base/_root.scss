@@ -1,0 +1,34 @@
+@use "sass:meta";
+@use "abstracts" as *;
+
+// Emits every theme token as a CSS custom property.
+:root {
+  @each $name, $value in $colors {
+    --#{$name}: #{$value};
+  }
+  @each $name, $value in $fonts {
+    // inspect() keeps the quotes around multi-word family names
+    --#{$name}: #{meta.inspect($value)};
+  }
+  @each $name, $value in $gradients {
+    --#{$name}: #{$value};
+  }
+  @each $name, $value in $font-variations {
+    --#{$name}: #{$value};
+  }
+  @each $name, $value in $easings {
+    --#{$name}: #{$value};
+  }
+
+  --gutter: #{$gutter};
+  --gl: max(var(--gutter), env(safe-area-inset-left, 0px));
+  --gr: max(var(--gutter), env(safe-area-inset-right, 0px));
+
+  // read by the motion engine so JS media queries match the SCSS breakpoint
+  --bp-mobile: #{$bp-mobile};
+
+  color-scheme: $color-scheme;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}

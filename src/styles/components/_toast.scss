@@ -1,0 +1,26 @@
+@use "abstracts" as *;
+
+.toast {
+  position: fixed;
+  left: 50%;
+  @include safe-bottom(28px);
+  z-index: 9700;
+  padding: 12px 20px;
+  border-radius: $radius-pill;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 15px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 20px);
+  transition: opacity 0.5s var(--ease-out), transform 0.5s var(--ease-out);
+  max-width: calc(100vw - 40px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &[data-show] {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
