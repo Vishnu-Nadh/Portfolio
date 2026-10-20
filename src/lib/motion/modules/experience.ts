@@ -1,41 +1,29 @@
 import { pad2 } from "@/lib/format";
 import type { MotionContext } from "../context";
-import { $, $$, clamp, easeOutQuart, lerpK } from "../utils";
+import { $, $$, clamp, lerpK } from "../utils";
+
+export type ExperienceList = ReturnType<typeof createExperience>;
 
 /**
- * Selected work: scroll/hover picks the focused project, row titles morph,
- * the progress bar fills, and the floating card docks in the sticky frame
- * or lifts off to trail the pointer while a row is hovered.
+ * Experience: scroll (or hover on desktop) picks the focused role; its summary panel crossfades
+ * in the sticky dock, role titles morph width/weight, and the progress bar fills.
  */
-export function createWork(ctx: MotionContext) {
+export function createExperience(ctx: MotionContext) {
   const { S, mq, data } = ctx;
   const list = $("[data-list]");
-  const rows = $$<HTMLAnchorElement>(".row", list);
+  const rows = $$(".row", list);
   const names = rows.map((r) => $(".row__name", r));
-  const card = $(".card");
-  const stage = $("[data-stage]");
-  const layers = $$(".layer", card);
-  const stageLayers = $$(".layer", stage);
+  const layers = $$(".layer", $("[data-stage]"));
   const cur$ = $("[data-cur]"),
-    ghost$ = $("[data-ghost]"),
     plat$ = $("[data-plat]"),
     bar$ = $("[data-bar]");
 
   const W = {
     sec: $(".work"),
-    frame: $("[data-dockframe]"),
     col: $(".work__col"),
     focus: -1,
     hover: -1,
     t: rows.map(() => ({ t: 0, v: -1 })),
-    lift: 0,
-    from: 0,
-    t0: 0,
-    dur: 600,
-    trail: false,
-    x: 0,
-    y: 0,
-    shown: null as boolean | null,
     prog: -1,
     secTop: 0,
     secH: 0,
@@ -56,9 +44,6 @@ export function createWork(ctx: MotionContext) {
     ctx.on(r, "blur", () => r.classList.remove("is-hot"));
   });
   ctx.on(list, "mouseleave", () => (W.hover = -1));
-  ctx.on(W.frame, "click", () => {
-    if (W.focus >= 0) rows[W.focus].click();
-  });
 
   ctx.measureFns.add(() => {
     const sy = scrollY,
@@ -74,25 +59,23 @@ export function createWork(ctx: MotionContext) {
   function setFocus(i: number) {
     W.focus = i;
     layers.forEach((l, n) => l.classList.toggle("is-on", n === i));
-    stageLayers.forEach((l, n) => l.classList.toggle("is-on", n === i));
     rows.forEach((r, n) => r.classList.toggle("is-focus", n === i));
-    cur$.textContent = ghost$.textContent = pad2(i + 1);
-    plat$.textContent = data.projects[i].platform;
+    cur$.textContent = pad2(i + 1);
+    plat$.textContent = data.experience.items[i].period;
   }
 
-  ctx.frameFns.add((now, k, y) => {
+  ctx.frameFns.add((_now, k, y) => {
     const vh = innerHeight;
     if (!W.rowC.length) return;
     const near = y + vh > W.secTop - vh * 0.5 && y < W.secTop + W.secH;
     if (!near) return;
-    const mobile = mq.mobile.matches;
 
-    // which project is "in focus"
+    // which role is "in focus" (on mobile the card scrub owns this)
     let idx = 0;
-    if (W.hover >= 0 && S.fine && !mobile) idx = W.hover;
+    if (mq.mobile.matches) idx = W.focus < 0 ? 0 : W.focus;
+    else if (W.hover >= 0 && S.fine) idx = W.hover;
     else {
-      let c = y + vh / 2;
-      if (mobile) c = (y + W.col.getBoundingClientRect().bottom + y + vh) / 2;
+      const c = y + vh / 2;
       let best = Infinity;
       W.rowC.forEach((r, n) => {
         const d = Math.abs(r.c - c);
@@ -104,7 +87,7 @@ export function createWork(ctx: MotionContext) {
     }
     if (idx !== W.focus) setFocus(idx);
 
-    // row title morph
+    // role title morph
     W.t.forEach((o, n) => {
       const target = +(n === idx);
       o.t = S.on ? o.t + (target - o.t) * lerpK(0.12, k) : target;
@@ -124,40 +107,7 @@ export function createWork(ctx: MotionContext) {
       W.prog = p;
       bar$.style.transform = `scaleX(${p.toFixed(4)})`;
     }
-
-    // floating card
-    if (mobile) {
-      card.style.opacity = "0";
-      W.shown = null;
-      return;
-    }
-    if (W.shown !== true) {
-      W.shown = true;
-      card.style.opacity = "1";
-    }
-    const fr = W.frame.getBoundingClientRect();
-    const fx = fr.left + fr.width / 2,
-      fy = fr.top + fr.height / 2;
-    const trail = S.on && S.fine && W.hover >= 0;
-    if (trail !== W.trail) {
-      W.trail = trail;
-      W.from = W.lift;
-      W.t0 = now;
-      W.dur = trail ? 600 : 900;
-      if (trail) {
-        W.x = S.px;
-        W.y = S.py;
-      }
-    }
-    W.lift = W.from + ((trail ? 1 : 0) - W.from) * easeOutQuart(clamp((now - W.t0) / W.dur));
-    const px0 = W.x;
-    W.x += (S.px - W.x) * lerpK(0.1, k);
-    W.y += (S.py - W.y) * lerpK(0.1, k);
-    const tilt = clamp(((W.x - px0) / k) * 0.6, -12, 12);
-    const tx = fx + (clamp(W.x + 200, 180, innerWidth - 180) - fx) * W.lift;
-    const ty = fy + (clamp(W.y, 220, vh - 220) - fy) * W.lift;
-    const base = fr.width / 320;
-    const sc = base + (1 - base) * W.lift;
-    card.style.transform = `translate3d(${(tx - 160).toFixed(1)}px,${(ty - 200).toFixed(1)}px,0) rotate(${(tilt * W.lift).toFixed(2)}deg) scale(${sc.toFixed(4)})`;
   });
+
+  return { layers, col: W.col, setFocus, current: () => W.focus };
 }

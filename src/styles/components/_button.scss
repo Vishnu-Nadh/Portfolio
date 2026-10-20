@@ -7,7 +7,6 @@
   border-radius: $radius-pill;
   @include mono-label;
   text-align: center;
-  transition: color 0.3s, border-color 0.3s, background 0.3s;
 
   &:hover { color: var(--accent); border-color: var(--accent); }
 
@@ -18,4 +17,15 @@
 
     &:hover { color: var(--on-accent); background: var(--accent-2); border-color: var(--accent-2); }
   }
+}
+
+// buttons and the header CTA widen their tracking on hover
+.btn,
+.header__cta {
+  transition: color 0.3s, background 0.3s, border-color 0.3s, letter-spacing 0.6s var(--ease-out), padding 0.6s var(--ease-out);
+}
+
+@media (hover: hover) {
+  .btn:hover { letter-spacing: 0.18em; padding-inline: 34px; }
+  .header__cta:hover { letter-spacing: 0.16em; }
 }

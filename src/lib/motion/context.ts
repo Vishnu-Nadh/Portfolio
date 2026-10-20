@@ -23,7 +23,7 @@ export interface MotionContext {
   data: PortfolioData;
   root: HTMLElement;
   S: MotionState;
-  mq: { fine: MediaQueryList; reduce: MediaQueryList; mobile: MediaQueryList };
+  mq: { fine: MediaQueryList; reduce: MediaQueryList; mobile: MediaQueryList; tablet: MediaQueryList };
   ease: { out: string; io: string };
   flags: { alive: boolean; busy: boolean; introRunning: boolean };
   frameFns: Set<FrameFn>;
@@ -41,6 +41,7 @@ export function createContext(data: PortfolioData): MotionContext {
     fine: matchMedia("(pointer: fine)"),
     reduce: matchMedia("(prefers-reduced-motion: reduce)"),
     mobile: matchMedia(`(max-width: ${cssVar("--bp-mobile", "700px")})`),
+    tablet: matchMedia(`(max-width: ${cssVar("--bp-tablet", "1100px")})`),
   };
   const disposers: Array<() => void> = [];
 

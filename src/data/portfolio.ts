@@ -7,26 +7,83 @@ import type { PortfolioData } from "@/types/portfolio";
 
 export const portfolio: PortfolioData = {
   meta: {
-    title: "Folio Motion Base",
+    title: "Folio Draft 3D",
     description: "Front-end developer portfolio.",
   },
 
-  brand: { first: "First", mark: "L", rest: "astname" },
-  heroLines: ["FIRST", "LASTNAME"],
+  brand: { first: "Vishnu", mark: "N", rest: "adh" },
+  heroLines: ["VISHNU", "NADH"],
   role: "Front-end developer",
   place: "Your city",
   timeZone: "Asia/Kolkata",
 
-  marquee: ["React", "Design systems", "Motion", "Performance", "SEO", "Accessibility"],
-
-  projects: [
-    { lines: ["Project", "Alpha"], year: "2026", type: "Web app", tag: "Live", platform: "React / Next.js", hue: 262 },
-    { lines: ["Project", "Bravo"], year: "2025", type: "Design system", tag: "", platform: "TypeScript", hue: 18 },
-    { lines: ["Project", "Charlie"], year: "2025", type: "Marketing site", tag: "Live", platform: "React / AWS", hue: 168 },
-    { lines: ["Project", "Delta"], year: "2024", type: "Dashboard", tag: "", platform: "React", hue: 330 },
-    { lines: ["Project", "Echo"], year: "2023", type: "Prototype", tag: "R&D", platform: "AI / MCP", hue: 205 },
-    { lines: ["Project", "Foxtrot"], year: "2022", type: "E-commerce", tag: "", platform: "Shopify", hue: 48 },
+  nav: [
+    { label: "Experience", target: "work", variant: "link" },
+    { label: "About", target: "hello", variant: "link" },
+    { label: "Contact", target: "contact", variant: "cta", cursor: "Say hi" },
   ],
+
+  transitions: {
+    top: ["Home", "Top"],
+    work: ["Experience", "Where I've worked"],
+    hello: ["About", "Hello"],
+    contact: ["Contact", "Say hi"],
+  },
+
+  hero: {
+    eyebrow: "Hey, I am",
+    lead: [
+      { text: "I build modern web experiences for product teams, focusing on " },
+      { text: "performance, SEO", bold: true },
+      { text: " and " },
+      { text: "clean design.", bold: true },
+    ],
+    cta: "View work →",
+    ctaCursor: "Browse",
+    more: "About me",
+    index: ["React", "Next.js", "SEO", "Performance"],
+    open: ["Open", "to new", "opportunities"],
+  },
+
+  skills: {
+    title: "Skills",
+    hint: "Hover or tap to explore",
+    label: "Skills",
+    items: [
+      { name: "Build", hues: [332, 12], line: "Component-driven interfaces in React and Next.js, typed end to end.", tools: ["React", "Next.js", "TypeScript", "HTML & CSS"] },
+      { name: "Motion", hues: [40, 18], line: "Interaction and animation that responds to pointer and scroll without getting in the way.", tools: ["Web Animations", "GSAP", "Framer Motion", "Lenis"] },
+      { name: "Craft", hues: [268, 318], line: "Design systems, accessible markup and layouts that hold up on every screen.", tools: ["Design systems", "Accessibility", "Figma", "Responsive"] },
+      { name: "Ship", hues: [350, 44], line: "Fast, findable, tested sites that are easy to deploy and maintain.", tools: ["Performance", "SEO", "Testing", "Vercel"] },
+    ],
+  },
+
+  /* placeholder roles: replace with real titles, companies, dates, summaries and stacks */
+  experience: {
+    title: "Experience",
+    years: "2022 — 2026",
+    pause: "(Pause motion)",
+    play: "(Play motion)",
+    label: "Experience",
+    items: [
+      {
+        role: ["Front-end", "Developer"], company: "Company One", period: "2024 — Now", length: "2 yrs", type: "Full-time", tag: "Current", hues: [262, 312],
+        summary: "Lead front-end on the core product. Rebuilt the web app in Next.js, set up the shared component library and cut load times across the main flows.",
+        stack: ["React", "Next.js", "TypeScript", "Tailwind", "Vercel"],
+      },
+      {
+        role: ["UI", "Engineer"], company: "Company Two", period: "2023 — 2024", length: "1 yr 4 mos", type: "Full-time", tag: "", hues: [330, 20],
+        summary: "Built and maintained the design system used by three product teams, from tokens through to documented, accessible components.",
+        stack: ["TypeScript", "React", "Storybook", "Figma", "Jest"],
+      },
+      {
+        role: ["Web", "Developer"], company: "Company Three", period: "2022 — 2023", length: "1 yr", type: "Contract", tag: "", hues: [272, 40],
+        summary: "Shipped marketing sites and storefronts for clients, with a focus on performance, SEO and smooth, considered motion.",
+        stack: ["JavaScript", "Shopify", "GSAP", "HTML & CSS", "AWS"],
+      },
+    ],
+  },
+
+  closeSection: { title: "(Up close)", hint: "Drag or scroll" },
 
   closeUps: [
     { name: "Alpha", kind: "Mobile", hue: 262 },
@@ -37,36 +94,6 @@ export const portfolio: PortfolioData = {
     { name: "Echo", kind: "Agent UI", hue: 205 },
     { name: "Foxtrot", kind: "Cart", hue: 48 },
   ],
-
-  nav: [
-    { label: "Work", target: "work", variant: "link" },
-    { label: "About", target: "hello", variant: "link" },
-    { label: "Contact", target: "contact", variant: "cta", cursor: "Say hi" },
-  ],
-
-  transitions: {
-    top: ["Home", "Top"],
-    work: ["Work", "Selected projects"],
-    hello: ["About", "Hello"],
-    contact: ["Contact", "Say hi"],
-  },
-
-  hero: {
-    eyebrow: "(Portfolio / ©2026)",
-    intro: "I build fast, accessible interfaces with a lot of motion in them. Placeholder copy until the real content lands.",
-    scrollHint: "↓ Scroll, gently",
-    cta: "See the work →",
-  },
-
-  work: {
-    title: "Selected work",
-    years: "2022 — 2026",
-    pause: "(Pause motion)",
-    play: "(Play motion)",
-    rowCta: "View project →",
-  },
-
-  closeSection: { title: "(Up close)", hint: "Drag or scroll" },
 
   hello: {
     eyebrow: "(Hello)",
@@ -87,10 +114,11 @@ export const portfolio: PortfolioData = {
   },
 
   toasts: {
-    project: "Project page goes here",
     detail: "Detail view goes here",
     contact: "Contact link goes here",
   },
 
   artLabel: "Placeholder artwork",
+
+  sound: { label: "Sound", on: "Turn sound off", off: "Turn sound on" },
 };

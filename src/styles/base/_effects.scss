@@ -20,5 +20,13 @@ html.lenis body { height: auto; }
 /* gating: hidden start states only while motion is on and JS is alive */
 @include motion-ok {
   html[data-js][data-motion="on"]:not(.entered) [data-in] { transform: translateY(115%); }
+  html[data-js][data-motion="on"]:not(.entered) [data-pin] { opacity: 0; transform: translateY(55%); }
+  html[data-js][data-motion="on"]:not(.entered) :is(.hero__ul, .hero__dash, .hero__more::after) { clip-path: inset(0 100% 0 0); }
+  html[data-js][data-motion="on"].entered .hero__more::after { animation: ulIn 1000ms cubic-bezier(0.76, 0, 0.24, 1) 1500ms both; }
   html[data-js][data-motion="on"] [data-words]:not(.is-in) .wd { transform: translateY(110%); }
+}
+
+@keyframes ulIn {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
 }

@@ -5,6 +5,8 @@ export type KineticType = ReturnType<typeof createKineticType>;
 
 interface KLine {
   line: HTMLElement;
+  /** gradient underline under the last line; tracks the line's live width */
+  ul: HTMLElement | null;
   els: HTMLElement[];
   chars: string[];
   /** target heat per letter */
@@ -28,11 +30,12 @@ const STEPS = 16;
  * (Archivo wdth/wght axes), while the line is constrained to fit its container.
  */
 export function createKineticType(ctx: MotionContext) {
-  const { S, mq } = ctx;
+  const { S } = ctx;
+  const tablet = ctx.mq.tablet;
   const heroEl = $(".hero__name");
   const klines: KLine[] = $$(".hero__line", heroEl).map((line) => {
     const els = $$(".kl", line);
-    return { line, els, chars: els.map((n) => n.dataset.ch ?? ""), t: els.map(() => 0), v: els.map(() => 0), cx: [], cy: [], w: [], room: 0, base: 0, fs: 0 };
+    return { line, ul: line.querySelector<HTMLElement>(".hero__ul"), els, chars: els.map((n) => n.dataset.ch ?? ""), t: els.map(() => 0), v: els.map(() => 0), cx: [], cy: [], w: [], room: 0, base: 0, fs: 0 };
   });
   // char -> { base width (em), cumulative width delta for each axis step (em) }
   const widthCache = new Map<string, { base: number; d: Float32Array }>();
@@ -93,20 +96,33 @@ export function createKineticType(ctx: MotionContext) {
         L.els[i].style.fontVariationSettings = fvsLetter(v);
       }
     }
+    if (L.ul) {
+      let w = L.base;
+      for (let i = 0; i < L.v.length; i++) w += sample(L.w[i], L.v[i]);
+      L.ul.style.width = (w * L.fs).toFixed(1) + "px";
+    }
   }
 
   function fit() {
     measureChars(klines.flatMap((L) => L.chars));
     const contW = heroEl.clientWidth;
-    const contH = heroEl.clientHeight;
-    const mobile = mq.mobile.matches;
-    klines.forEach((L, i) => {
+    const compact = tablet.matches;
+    klines.forEach((L) => {
       L.w = L.chars.map((c) => widthCache.get(c)!.d);
       L.base = L.chars.reduce((s, c) => s + widthCache.get(c)!.base, 0);
-      const frac = mobile ? 0.94 : i === 0 ? 0.6 : 0.78;
-      let fs = (contW * frac) / L.base;
-      if (!mobile && contH > 0) fs = Math.min(fs, contH / 1.95);
-      if (mobile) fs = Math.min(fs, contW * 0.5);
+    });
+    // every line shares one size: the widest line fills ~88% of the column...
+    const maxBase = Math.max(...klines.map((L) => L.base));
+    let fs = (contW * (compact ? 0.9 : 0.88)) / maxBase;
+    if (!compact) {
+      // ...capped so the name, eyebrow and copy all fit the hero body height
+      const hb = $(".hero__body"),
+        cp = $(".hero__copy"),
+        eb = $(".hero__eyebrow");
+      const gap = parseFloat(getComputedStyle(hb).rowGap) || 0;
+      fs = Math.min(fs, (hb.clientHeight - cp.offsetHeight - gap - (eb ? eb.offsetHeight + 20 : 0) - 24) / (klines.length * 0.76 + 0.1));
+    } else fs = Math.min(fs, contW * 0.5);
+    klines.forEach((L) => {
       L.line.style.setProperty("--fs", fs.toFixed(2) + "px");
       L.fs = fs;
     });

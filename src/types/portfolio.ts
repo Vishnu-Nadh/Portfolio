@@ -1,24 +1,41 @@
 export type NavTarget = "top" | "work" | "hello" | "contact";
 
 export interface Brand {
-  /** Upright, uppercase part of the wordmark ("First"). */
+  /** Upright, uppercase part of the wordmark ("Vishnu"); its first letter sits in an accent box. */
   first: string;
-  /** Single glyph shown inside the accent box ("L"). */
+  /** Single glyph shown inside the second accent box ("N"). */
   mark: string;
-  /** Italic remainder of the wordmark ("astname"). */
+  /** Italic remainder of the wordmark ("adh"). */
   rest: string;
 }
 
-export interface Project {
-  /** Each entry renders on its own line in the list. */
-  lines: string[];
-  year: string;
+/** A run of hero lead text; bold runs render in the accent colour. */
+export interface LeadSegment {
+  text: string;
+  bold?: boolean;
+}
+
+export interface Skill {
+  name: string;
+  /** Two hues (0–360) for the panel's colour field. */
+  hues: [number, number];
+  line: string;
+  tools: string[];
+}
+
+export interface Experience {
+  /** Each entry renders on its own line. */
+  role: string[];
+  company: string;
+  period: string;
+  length: string;
   type: string;
-  /** Optional accent tag, e.g. "Live". Empty string hides it. */
+  /** Optional accent tag, e.g. "Current". Empty string hides it. */
   tag: string;
-  platform: string;
-  /** Hue (0–360) used for the placeholder artwork gradient. */
-  hue: number;
+  /** Two hues (0–360) for the summary panel background. */
+  hues: [number, number];
+  summary: string;
+  stack: string[];
 }
 
 export interface CloseUp {
@@ -47,28 +64,34 @@ export interface PortfolioData {
   place: string;
   /** IANA zone used for the live clock in the header/footer. */
   timeZone: string;
-  marquee: string[];
-  projects: Project[];
-  closeUps: CloseUp[];
   nav: NavLink[];
   /** Big label + sub label shown by the page transition, per nav target. */
   transitions: Record<NavTarget, [label: string, sub: string]>;
   hero: {
     eyebrow: string;
-    intro: string;
-    scrollHint: string;
+    lead: LeadSegment[];
     cta: string;
+    ctaCursor: string;
+    more: string;
+    /** Numbered strip under the hero. */
+    index: string[];
+    /** Availability note, one entry per line. */
+    open: string[];
   };
-  work: {
+  skills: { title: string; hint: string; label: string; items: Skill[] };
+  experience: {
     title: string;
     years: string;
     pause: string;
     play: string;
-    rowCta: string;
+    label: string;
+    items: Experience[];
   };
   closeSection: { title: string; hint: string };
+  closeUps: CloseUp[];
   hello: { eyebrow: string; statement: string; stats: Stat[] };
   footer: { headline: string; cta: string; replay: string; toTop: string };
-  toasts: { project: string; detail: string; contact: string };
+  toasts: { detail: string; contact: string };
   artLabel: string;
+  sound: { label: string; on: string; off: string };
 }

@@ -1,16 +1,19 @@
 import type { MotionContext } from "../context";
 import type { Cursor } from "./cursor";
+import type { Glitch } from "./glitch";
 import type { SmoothScroll } from "./smoothScroll";
 import { $, $$, sleep } from "../utils";
 
 export const INTRO_SEEN_KEY = "folio-intro";
 
+const HOLD = "steps(1, end)";
+
 /**
- * Preloader: wordmark letters rise and flex their axes, a counter runs to 100,
- * the accent box scales over the screen and then shrinks into the header logo.
- * Click / Esc fast-forwards (4x).
+ * Preloader (datamosh): wordmark letters rise and flex their axes under a scanline while a counter
+ * runs to 100; then the lockup tears apart into scattered shards and the screen dissolves in tiles,
+ * revealing the page. Click / Esc fast-forwards (4x).
  */
-export function createIntro(ctx: MotionContext, cursor: Cursor, scroll: SmoothScroll, enterPage: () => void) {
+export function createIntro(ctx: MotionContext, cursor: Cursor, scroll: SmoothScroll, glitch: Glitch, enterPage: () => void) {
   const { S, flags, root, ease } = ctx;
   const intro = $(".intro");
   let rate = 1;
@@ -30,7 +33,7 @@ export function createIntro(ctx: MotionContext, cursor: Cursor, scroll: SmoothSc
 
     const letters = $$(".intro__ch", intro),
       box = $(".intro__box", intro),
-      glyph = $("[data-glyph]", intro);
+      logo = $(".intro__logo", intro);
     const meta = $(".intro__meta", intro),
       count = $(".intro__count", intro),
       line = $(".intro__line", intro),
@@ -79,6 +82,7 @@ export function createIntro(ctx: MotionContext, cursor: Cursor, scroll: SmoothSc
     });
     play(box, [{ transform: "scale(0) rotate(-90deg)" }, { transform: "none" }], { duration: 650, delay: 220, easing: ease.out, fill: "forwards" });
     play(meta, [{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: 140, fill: "both" });
+    glitch.introIn({ letters, logo });
 
     // counter + progress line, driven by accumulated (rate-scaled) time
     await new Promise<void>((resolve) => {
@@ -91,6 +95,7 @@ export function createIntro(ctx: MotionContext, cursor: Cursor, scroll: SmoothSc
         const e = 1 - Math.pow(1 - Math.min(1, acc / 1000), 3);
         count.textContent = String(Math.round(100 * e)).padStart(3, "0");
         line.style.transform = `scaleX(${e.toFixed(4)})`;
+        glitch.countTick(count, e);
         if (acc >= 1120) resolve();
         else requestAnimationFrame(step);
       };
@@ -98,35 +103,40 @@ export function createIntro(ctx: MotionContext, cursor: Cursor, scroll: SmoothSc
     });
     if (!flags.alive) return;
 
-    // exit the lockup, grow the accent box over the screen
-    letters.forEach((l, i) => play(l, [{ transform: "none" }, { transform: "translateY(-115%)" }], { duration: 480, delay: 16 * i, easing: ease.io, fill: "forwards" }));
-    play(meta, [{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: "forwards" });
-    play(line, [{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: "forwards" });
-    play(glyph, [{ opacity: 1 }, { opacity: 0 }], { duration: 200, delay: 200, fill: "forwards" });
-    const vw = innerWidth,
-      vh = innerHeight;
-    const bw = box.offsetWidth,
-      bh = box.offsetHeight;
-    const bx = box.offsetLeft + bw / 2,
-      by = box.offsetTop + bh / 2; // layout centre (unaffected by transforms)
-    const f = 1.15 * Math.max(vw / bw, vh / bh);
-    const E = `translate(${vw / 2 - bx}px,${vh / 2 - by}px) scale(${f})`;
-    await fin(play(box, [{ transform: "none" }, { transform: E }], { duration: 650, delay: 160, easing: ease.io, fill: "forwards" }));
+    // the lockup tears apart into scattered shards; the accent box shreds instead of taking over the screen
+    glitch.introOut({ logo });
+    letters.forEach((l, i) => play(l, [{ transform: "none" }, { transform: "translateY(-115%)" }], { duration: 420, delay: 14 * i, easing: ease.io, fill: "forwards" }));
+    play(meta, [{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: "forwards" });
+    play(line, [{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: "forwards" });
+    glitch.frags(intro, { n: 34, dur: 640, rate });
+    await fin(
+      play(
+        box,
+        [
+          { transform: "none", opacity: 1, easing: HOLD },
+          { transform: "translateX(-14px) scaleX(1.5)", opacity: 1, offset: 0.25, easing: HOLD },
+          { transform: "translateX(20px) scaleY(0.35)", opacity: 0.5, offset: 0.5, easing: HOLD },
+          { transform: "translateX(-8px) scaleX(2.4) scaleY(0.1)", opacity: 1, offset: 0.75, easing: HOLD },
+          { transform: "scaleX(3) scaleY(0)", opacity: 0 },
+        ],
+        { duration: 460, delay: 120, fill: "forwards" },
+      ),
+    );
     if (!flags.alive) return;
 
-    // page starts underneath; box shrinks into the header mark
+    // the screen dissolves in tiles over the page as it enters
+    glitch.landing();
+    const diss = glitch.dissolve(intro, { dur: 860, rate });
     bg.style.opacity = "0";
     root.style.overflow = "";
     scroll.resume();
-    const tgt = $(".logo__mark").getBoundingClientRect();
-    const T = `translate(${tgt.left + tgt.width / 2 - bx}px,${tgt.top + tgt.height / 2 - by}px) scale(${tgt.width / bw})`;
-    const mainEl = $("main");
     enterPage();
-    play(mainEl, [{ transform: "scale(1.06)", opacity: 0.4 }, { transform: "none", opacity: 1 }], { duration: 1100, easing: ease.out });
-    play(glyph, [{ opacity: 0 }, { opacity: 1 }], { duration: 250, delay: 480, fill: "forwards" });
-    await fin(play(box, [{ transform: E }, { transform: T }], { duration: 750, easing: "cubic-bezier(.83,0,.17,1)", fill: "forwards" }));
+    play($("main"), [{ transform: "scale(1.04)", opacity: 0.5 }, { transform: "none", opacity: 1 }], { duration: 1000, easing: ease.out });
+    glitch.frags(intro, { n: 20, dur: 520, delay: 160, rate });
+    await diss;
     if (!flags.alive) return;
 
+    glitch.landed();
     detach();
     delete intro.dataset.cursor;
     delete root.dataset.intro;

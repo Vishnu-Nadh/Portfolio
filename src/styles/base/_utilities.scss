@@ -1,5 +1,10 @@
 @use "abstracts" as *;
 
+/* Anybody wherever type is loud: big, uppercase or numeric */
+.kl, .logo, .intro__logo, .intro__count, .trans__label, .skills__name, .skills__ghost, .stat__n, .art__num, .dock__ghost {
+  font-family: var(--font-display);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

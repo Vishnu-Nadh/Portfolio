@@ -20,12 +20,17 @@
     --#{$name}: #{$value};
   }
 
+  @each $name, $value in $layout {
+    --#{$name}: #{$value};
+  }
+
   --gutter: #{$gutter};
   --gl: max(var(--gutter), env(safe-area-inset-left, 0px));
   --gr: max(var(--gutter), env(safe-area-inset-right, 0px));
 
   // read by the motion engine so JS media queries match the SCSS breakpoint
   --bp-mobile: #{$bp-mobile};
+  --bp-tablet: #{$bp-tablet};
 
   color-scheme: $color-scheme;
   box-sizing: border-box;

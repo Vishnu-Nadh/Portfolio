@@ -44,7 +44,9 @@
     &--italic { font-style: italic; }
   }
 
-  &__box {
+  // the first letter of the name sits in its own accent box
+  &__box,
+  &__ch--box {
     display: inline-flex;
     align-items: center;
     justify-content: center;

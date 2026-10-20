@@ -72,7 +72,8 @@
   &__first { text-transform: uppercase; font-variation-settings: var(--fvs-display); }
   &__rest { font-style: italic; font-variation-settings: "wdth" 110, "wght" 250; }
 
-  &__mark {
+  &__mark,
+  &__box {
     position: relative;
     display: inline-flex;
     align-items: center;

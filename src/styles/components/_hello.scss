@@ -1,7 +1,7 @@
 @use "abstracts" as *;
 
 .hello {
-  padding: clamp(80px, 16vh, 180px) var(--gr) clamp(60px, 10vh, 120px) var(--gl);
+  padding: var(--sec) var(--gr) var(--sec) var(--gl);
   border-top: 1px solid var(--hair);
 
   &__text {

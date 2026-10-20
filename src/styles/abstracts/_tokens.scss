@@ -13,7 +13,8 @@
 $primary: #0b0810; // page background, and the dark text on accent fills
 $ink: #f6f0f4; // body text, hairlines and outlines (at low alpha)
 $accent: #ff4d8d; // the accent (CTAs, row fill, cursor, intro, transitions)
-$accent-2: #ffb547; // solid button hover
+$accent-2: #ffb547; // the answer: gradients, solid button hover, 3D fill light
+$violet: #6a3df0; // deep space tone, only used in the 3D galaxy
 
 // Mixes $ink into $primary by $weight, rounded to whole RGB channels (emits clean hex).
 @function tint($weight) {
@@ -39,11 +40,12 @@ $colors: (
   "accent": $accent,
   "accent-2": $accent-2,
   "on-accent": $primary,
+  "violet": $violet,
   // idle cursor ring border (also used by the motion engine)
   "cursor-ring": rgba($ink, 0.5),
 );
 
-// accent -> accent-2 blends, used on the progress bar, marquee diamonds and transition bars
+// accent -> accent-2 blends: progress bars, underlines, dashes
 $gradients: (
   "gradient": linear-gradient(90deg, $accent, $accent-2),
   "gradient-diag": linear-gradient(135deg, $accent, $accent-2),
@@ -52,15 +54,17 @@ $gradients: (
 $color-scheme: dark;
 
 // ---------- type ----------
-// --font-archivo / --font-geist-mono are injected by next/font in app/layout.tsx
+// Type rule: Anybody when it is loud (big, uppercase), Bricolage whenever it is being read,
+// JetBrains Mono for labels and buttons. The --font-* families are injected by next/font in app/layout.tsx.
 $fonts: (
-  "font-sans": (var(--font-archivo), "Archivo", "Helvetica Neue", Arial, sans-serif),
-  "font-mono": (var(--font-geist-mono), "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace),
+  "font-sans": (var(--font-bricolage), "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif),
+  "font-display": (var(--font-anybody), "Anybody", "Helvetica Neue", Arial, sans-serif),
+  "font-mono": (var(--font-jetbrains), "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace),
 );
 
-// variable-font presets (Archivo wdth / wght axes)
+// variable-font presets (Anybody / Bricolage wdth + wght axes)
 $font-variations: (
-  "fvs-display": ('"wdth" 70, "wght" 800'),
+  "fvs-display": ('"wdth" 70, "wght" 900'),
   "fvs-row": ('"wdth" 88, "wght" 700'),
   "fvs-italic": ('"wdth" 115, "wght" 250'),
 );
@@ -76,6 +80,19 @@ $easings: (
 $gutter: clamp(20px, 4vw, 56px);
 $radius: 6px;
 $radius-pill: 100px;
+
+// emitted as custom properties (see base/_root.scss)
+$layout: (
+  // vertical section padding
+  "sec": clamp(64px, 10vh, 112px),
+  // height of the sticky skills / experience cards, and where they stick
+  "card-h": min(calc(100vh - 220px), 56vw),
+  "stick": max(88px, calc(50vh - var(--card-h) / 2 - 24px)),
+  // darkness of the veil over experience panel colour (0–1)
+  "veil": 0.62,
+  "radius": $radius,
+  "radius-pill": $radius-pill,
+);
 
 // ---------- breakpoints ----------
 $bp-tablet: 1100px;

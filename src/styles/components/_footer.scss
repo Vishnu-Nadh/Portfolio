@@ -1,5 +1,5 @@
 .foot {
-  padding: clamp(80px, 16vh, 180px) var(--gr) calc(28px + env(safe-area-inset-bottom, 0px)) var(--gl);
+  padding: var(--sec) var(--gr) calc(28px + env(safe-area-inset-bottom, 0px)) var(--gl);
   border-top: 1px solid var(--hair);
 
   &__cta {

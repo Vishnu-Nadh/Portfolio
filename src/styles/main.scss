@@ -1,4 +1,4 @@
-/* Global stylesheet entry. Order mirrors the cascade of the original page.
+/* Global stylesheet entry. Order mirrors the cascade of the design file.
    Theme values: abstracts/_tokens.scss */
 
 // base
@@ -8,6 +8,7 @@
 @use "base/effects";
 
 // fixed layers
+@use "components/glitch";
 @use "components/cursor";
 @use "components/toast";
 @use "components/transition";
@@ -17,10 +18,13 @@
 // sections
 @use "components/hero";
 @use "components/button";
-@use "components/marquee";
+@use "components/skills";
 @use "components/work";
 @use "components/dock";
 @use "components/art";
 @use "components/close";
 @use "components/hello";
 @use "components/footer";
+
+// 3D stage + tilt cards (after sections: overrides main / card transforms)
+@use "components/scene3d";

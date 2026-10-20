@@ -1,25 +1,34 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Geist_Mono } from "next/font/google";
+import { Anybody, Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
 import { portfolio } from "@/data/portfolio";
 import { bootScript } from "@/lib/motion/bootScript";
 import "@/styles/main.scss";
 
-// Archivo with its width axis: the kinetic type animates wdth + wght.
-// adjustFontFallback is off so missing glyphs (e.g. →) fall through to the stacks in
-// styles/abstracts/_tokens.scss, as on the original page, not a metric-scaled Arial.
-const archivo = Archivo({
+// Type rule: Anybody when it is loud (big, uppercase), Bricolage whenever it is being read,
+// JetBrains Mono for labels and buttons. The kinetic type animates Anybody's wdth + wght axes.
+// adjustFontFallback is off so missing glyphs fall through to the stacks in
+// styles/abstracts/_tokens.scss rather than a metric-scaled Arial.
+const anybody = Anybody({
   subsets: ["latin", "latin-ext"],
   axes: ["wdth"],
   style: ["normal", "italic"],
-  variable: "--font-archivo",
+  variable: "--font-anybody",
   display: "swap",
   adjustFontFallback: false,
 });
 
-const geistMono = Geist_Mono({
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin", "latin-ext"],
+  axes: ["opsz", "wdth"],
+  variable: "--font-bricolage",
+  display: "swap",
+  adjustFontFallback: false,
+});
+
+const jetbrains = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500"],
-  variable: "--font-geist-mono",
+  variable: "--font-jetbrains",
   display: "swap",
   adjustFontFallback: false,
 });
@@ -38,7 +47,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     // the boot script sets data-* on <html> before hydration
-    <html lang="en" className={`${archivo.variable} ${geistMono.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${anybody.variable} ${bricolage.variable} ${jetbrains.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: bootScript }} />
       </head>

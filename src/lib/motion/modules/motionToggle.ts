@@ -30,7 +30,7 @@ export function createMotionToggle(ctx: MotionContext, deps: MotionToggleDeps) {
   function setMotion(on: boolean) {
     S.on = on;
     root.dataset.motion = on ? "on" : "off";
-    pauseBtn.textContent = on ? data.work.pause : data.work.play;
+    pauseBtn.textContent = on ? data.experience.pause : data.experience.play;
     if (!on) {
       scroll.destroy();
       deps.resettables.forEach((r) => r.reset());

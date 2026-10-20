@@ -2,7 +2,7 @@ import type { PortfolioData } from "@/types/portfolio";
 
 type IntroProps = Pick<PortfolioData, "brand" | "role" | "place">;
 
-/** Preloader lockup; shown while html[data-intro] is set. */
+/** Preloader lockup; shown while html[data-intro] is set. The first letter sits in its own accent box. */
 export function Intro({ brand, role, place }: IntroProps) {
   return (
     <div className="intro" aria-hidden="true">
@@ -11,7 +11,7 @@ export function Intro({ brand, role, place }: IntroProps) {
         <div className="intro__logo">
           <span className="intro__clip intro__clip--first">
             {[...brand.first].map((c, i) => (
-              <span key={i} className="intro__ch">
+              <span key={i} className={i ? "intro__ch" : "intro__ch intro__ch--box"}>
                 {c.toUpperCase()}
               </span>
             ))}
