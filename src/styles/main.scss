@@ -8,7 +8,6 @@
 @use "base/effects";
 
 // fixed layers
-@use "components/glitch";
 @use "components/cursor";
 @use "components/toast";
 @use "components/transition";
@@ -18,13 +17,9 @@
 // sections
 @use "components/hero";
 @use "components/button";
-@use "components/skills";
-@use "components/work";
-@use "components/dock";
-@use "components/art";
-@use "components/close";
+@use "components/scenes";
 @use "components/hello";
 @use "components/footer";
 
-// 3D stage + tilt cards (after sections: overrides main / card transforms)
+// 3D stage (after sections: main sits above the canvas)
 @use "components/scene3d";

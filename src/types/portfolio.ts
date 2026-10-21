@@ -17,31 +17,22 @@ export interface LeadSegment {
 
 export interface Skill {
   name: string;
-  /** Two hues (0–360) for the panel's colour field. */
+  /** Two hues (0–360): planet surface/glow and satellite dot colours. */
   hues: [number, number];
   line: string;
   tools: string[];
 }
 
 export interface Experience {
-  /** Each entry renders on its own line. */
-  role: string[];
+  /** Two lines, e.g. ["Front-end", "Developer"]. */
+  role: [string, string];
   company: string;
   period: string;
   length: string;
-  type: string;
-  /** Optional accent tag, e.g. "Current". Empty string hides it. */
-  tag: string;
-  /** Two hues (0–360) for the summary panel background. */
+  /** Two hues (0–360); the second colours the station on the trajectory. */
   hues: [number, number];
   summary: string;
   stack: string[];
-}
-
-export interface CloseUp {
-  name: string;
-  kind: string;
-  hue: number;
 }
 
 export interface Stat {
@@ -78,20 +69,17 @@ export interface PortfolioData {
     /** Availability note, one entry per line. */
     open: string[];
   };
-  skills: { title: string; hint: string; label: string; items: Skill[] };
+  skills: { title: string; hint: string; satellites: string; items: Skill[] };
+  /** Listed newest first; the trajectory travels oldest → newest. */
   experience: {
     title: string;
     years: string;
+    hint: string;
     pause: string;
     play: string;
-    label: string;
     items: Experience[];
   };
-  closeSection: { title: string; hint: string };
-  closeUps: CloseUp[];
   hello: { eyebrow: string; statement: string; stats: Stat[] };
   footer: { headline: string; cta: string; replay: string; toTop: string };
-  toasts: { detail: string; contact: string };
-  artLabel: string;
-  sound: { label: string; on: string; off: string };
+  toasts: { contact: string };
 }

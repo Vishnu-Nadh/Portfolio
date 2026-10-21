@@ -14,7 +14,7 @@ $primary: #0b0810; // page background, and the dark text on accent fills
 $ink: #f6f0f4; // body text, hairlines and outlines (at low alpha)
 $accent: #ff4d8d; // the accent (CTAs, row fill, cursor, intro, transitions)
 $accent-2: #ffb547; // the answer: gradients, solid button hover, 3D fill light
-$violet: #6a3df0; // deep space tone, only used in the 3D galaxy
+$violet: #6a3df0; // deep space tone: galaxy, trajectory start, stat lines
 
 // Mixes $ink into $primary by $weight, rounded to whole RGB channels (emits clean hex).
 @function tint($weight) {
@@ -54,15 +54,15 @@ $gradients: (
 $color-scheme: dark;
 
 // ---------- type ----------
-// Type rule: Anybody when it is loud (big, uppercase), Bricolage whenever it is being read,
-// JetBrains Mono for labels and buttons. The --font-* families are injected by next/font in app/layout.tsx.
+// Type rule: Hubot Sans (wide, engineered, space-age) when it is loud; its sibling Mona Sans whenever
+// it is being read; JetBrains Mono for labels. The --font-* families are injected by next/font in app/layout.tsx.
 $fonts: (
-  "font-sans": (var(--font-bricolage), "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif),
-  "font-display": (var(--font-anybody), "Anybody", "Helvetica Neue", Arial, sans-serif),
+  "font-sans": (var(--font-mona), "Mona Sans", "Helvetica Neue", Arial, sans-serif),
+  "font-display": (var(--font-hubot), "Hubot Sans", var(--font-mona), "Mona Sans", "Helvetica Neue", Arial, sans-serif),
   "font-mono": (var(--font-jetbrains), "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace),
 );
 
-// variable-font presets (Anybody / Bricolage wdth + wght axes)
+// variable-font presets (Hubot / Mona Sans wdth + wght axes)
 $font-variations: (
   "fvs-display": ('"wdth" 70, "wght" 900'),
   "fvs-row": ('"wdth" 88, "wght" 700'),

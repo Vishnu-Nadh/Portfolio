@@ -2,6 +2,13 @@ import type { PortfolioData } from "@/types/portfolio";
 import { cssVar } from "./utils";
 
 export type FrameFn = (now: number, k: number, y: number) => void;
+
+/** Screen point + diameter (px) where a scene wants the 3D orb parked. */
+export interface Anchor {
+  x: number;
+  y: number;
+  d: number;
+}
 export type MeasureFn = () => void;
 
 /** Live pointer / motion state shared by every module. */
@@ -26,6 +33,8 @@ export interface MotionContext {
   mq: { fine: MediaQueryList; reduce: MediaQueryList; mobile: MediaQueryList; tablet: MediaQueryList };
   ease: { out: string; io: string };
   flags: { alive: boolean; busy: boolean; introRunning: boolean };
+  /** Written by the orbit / footer scenes, read by the 3D stage poses. */
+  anchors: { orbit?: Anchor; foot?: Anchor };
   frameFns: Set<FrameFn>;
   measureFns: Set<MeasureFn>;
   /** Adds a listener that is removed when the engine is destroyed. */
@@ -56,6 +65,7 @@ export function createContext(data: PortfolioData): MotionContext {
       io: cssVar("--ease-io", "cubic-bezier(.76,0,.24,1)"),
     },
     flags: { alive: true, busy: false, introRunning: false },
+    anchors: {},
     frameFns: new Set(),
     measureFns: new Set(),
     on(target, type, fn, opts) {

@@ -46,9 +46,9 @@ export const portfolio: PortfolioData = {
   },
 
   skills: {
-    title: "Skills",
-    hint: "Hover or tap to explore",
-    label: "Skills",
+    title: "(Skills)",
+    hint: "Scroll to orbit · click a planet",
+    satellites: "Satellites",
     items: [
       { name: "Build", hues: [332, 12], line: "Component-driven interfaces in React and Next.js, typed end to end.", tools: ["React", "Next.js", "TypeScript", "HTML & CSS"] },
       { name: "Motion", hues: [40, 18], line: "Interaction and animation that responds to pointer and scroll without getting in the way.", tools: ["Web Animations", "GSAP", "Framer Motion", "Lenis"] },
@@ -60,40 +60,28 @@ export const portfolio: PortfolioData = {
   /* placeholder roles: replace with real titles, companies, dates, summaries and stacks */
   experience: {
     title: "Experience",
-    years: "2022 — 2026",
+    years: "2022 → Now",
+    hint: "Scroll to travel · click a station",
     pause: "(Pause motion)",
     play: "(Play motion)",
-    label: "Experience",
     items: [
       {
-        role: ["Front-end", "Developer"], company: "Company One", period: "2024 — Now", length: "2 yrs", type: "Full-time", tag: "Current", hues: [262, 312],
+        role: ["Front-end", "Developer"], company: "Company One", period: "2024 — Now", length: "2 yrs", hues: [262, 312],
         summary: "Lead front-end on the core product. Rebuilt the web app in Next.js, set up the shared component library and cut load times across the main flows.",
         stack: ["React", "Next.js", "TypeScript", "Tailwind", "Vercel"],
       },
       {
-        role: ["UI", "Engineer"], company: "Company Two", period: "2023 — 2024", length: "1 yr 4 mos", type: "Full-time", tag: "", hues: [330, 20],
+        role: ["UI", "Engineer"], company: "Company Two", period: "2023 — 2024", length: "1 yr 4 mos", hues: [330, 20],
         summary: "Built and maintained the design system used by three product teams, from tokens through to documented, accessible components.",
         stack: ["TypeScript", "React", "Storybook", "Figma", "Jest"],
       },
       {
-        role: ["Web", "Developer"], company: "Company Three", period: "2022 — 2023", length: "1 yr", type: "Contract", tag: "", hues: [272, 40],
+        role: ["Web", "Developer"], company: "Company Three", period: "2022 — 2023", length: "1 yr", hues: [272, 40],
         summary: "Shipped marketing sites and storefronts for clients, with a focus on performance, SEO and smooth, considered motion.",
         stack: ["JavaScript", "Shopify", "GSAP", "HTML & CSS", "AWS"],
       },
     ],
   },
-
-  closeSection: { title: "(Up close)", hint: "Drag or scroll" },
-
-  closeUps: [
-    { name: "Alpha", kind: "Mobile", hue: 262 },
-    { name: "Alpha", kind: "Detail", hue: 290 },
-    { name: "Bravo", kind: "Tokens", hue: 18 },
-    { name: "Charlie", kind: "Hero", hue: 168 },
-    { name: "Delta", kind: "Charts", hue: 330 },
-    { name: "Echo", kind: "Agent UI", hue: 205 },
-    { name: "Foxtrot", kind: "Cart", hue: 48 },
-  ],
 
   hello: {
     eyebrow: "(Hello)",
@@ -114,11 +102,6 @@ export const portfolio: PortfolioData = {
   },
 
   toasts: {
-    detail: "Detail view goes here",
     contact: "Contact link goes here",
   },
-
-  artLabel: "Placeholder artwork",
-
-  sound: { label: "Sound", on: "Turn sound off", off: "Turn sound on" },
 };

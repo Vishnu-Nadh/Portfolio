@@ -8,7 +8,8 @@
 
   html[data-intro] & { display: block; }
 
-  &__bg { position: absolute; inset: 0; background: var(--bg); }
+  // soft vignette: the 3D galaxy and orb stay visible through the intro
+  &__bg { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, rgba(11, 8, 16, 0) 30%, rgba(11, 8, 16, 0.55) 100%); }
 
   &__lock {
     position: absolute;
@@ -25,6 +26,7 @@
     font-size: clamp(40px, 9vw, 150px);
     line-height: 1;
     color: var(--text);
+    text-shadow: 0 2px 40px rgba(11, 8, 16, 0.75);
   }
 
   &__clip {
@@ -94,3 +96,12 @@
     transform-origin: left;
   }
 }
+
+// the page waits underneath, hidden, until the intro hands over
+html[data-intro] main,
+html[data-intro] header { opacity: 0; }
+
+.intro__ch,
+.intro__box,
+.intro__meta,
+.intro__line { will-change: transform, opacity, filter; }

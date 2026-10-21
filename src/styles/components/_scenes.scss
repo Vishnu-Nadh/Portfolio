@@ -1,0 +1,338 @@
+@use "abstracts" as *;
+
+/* ORBITAL SKILLS + TRAJECTORY EXPERIENCE: two pinned scenes. Scroll drives the orbit angle and the probe
+   along the path; clicks scroll to the matching position so every change goes through the same smooth motion. */
+
+// ---------- shared: counter, progress track, pause button ----------
+.dock__cur { color: var(--accent); }
+.dock__track { height: 2px; margin-top: 10px; background: var(--hair); overflow: hidden; }
+.dock__bar { height: 100%; background: var(--gradient); transform: scaleX(0); transform-origin: left; }
+
+.work__head-end { display: flex; align-items: center; gap: 24px; }
+.work__pause {
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  margin: -16px 0;
+  padding: 16px 0;
+
+  &:hover { color: var(--accent); }
+}
+
+// ---------- scene frame ----------
+.orbit,
+.traj { position: relative; }
+.orbit { height: 440vh; }
+.traj { height: 360vh; }
+
+.orbit__pin,
+.traj__pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+}
+
+.orbit__head {
+  position: absolute;
+  z-index: 6;
+  left: var(--gl);
+  right: var(--gr);
+  top: calc(88px + env(safe-area-inset-top, 0px));
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.orbit__foot {
+  position: absolute;
+  z-index: 6;
+  left: var(--gl);
+  right: var(--gr);
+  bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  color: var(--faint);
+
+  .dock__track { flex: 1; max-width: 240px; margin: 0 0 0 auto; }
+}
+
+.orbit__sys,
+.orbit__planets,
+.traj__cam { position: absolute; inset: 0; }
+
+.orbit__svg,
+.traj__svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+
+// ---------- orbit ----------
+.orbit__e { fill: none; stroke-width: 1; }
+.orbit__e--main { stroke: rgba(246, 240, 244, 0.22); }
+.orbit__e--dash { stroke: rgba(246, 240, 244, 0.1); stroke-dasharray: 2 9; }
+.orbit__e--in { stroke: rgba(255, 181, 71, 0.18); }
+
+// CSS sun, replaced by the 3D orb once WebGL is up
+.orbit__sun {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 34% 30%, rgba(246, 240, 244, 0.9), rgba(255, 77, 141, 0.85) 22%, rgba(106, 61, 240, 0.6) 55%, rgba(11, 8, 16, 0) 75%);
+  box-shadow: 0 0 120px 20px rgba(255, 77, 141, 0.22);
+  transition: opacity 0.8s;
+
+  html[data-gl="on"] & { opacity: 0; }
+}
+
+// planet: a zero-size anchor positioned per frame; the ball scales around it
+.op {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  will-change: transform;
+}
+
+.op__ball {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100px;
+  height: 100px;
+  margin: -50px 0 0 -50px;
+  border-radius: 50%;
+  will-change: transform, filter;
+  transition: box-shadow 0.8s var(--ease-out);
+}
+
+.op.is-on .op__ball {
+  box-shadow: 0 0 60px 6px var(--glow), 0 0 0 calc(10px / var(--sc, 1)) rgba(246, 240, 244, 0.05), 0 0 0 calc(11px / var(--sc, 1)) rgba(246, 240, 244, 0.28) !important;
+}
+
+.op__lab {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, 0);
+  white-space: nowrap;
+  @include mono-label(12px, 0.08em);
+  color: var(--label);
+  transition: color 0.5s;
+}
+.op.is-on .op__lab { color: var(--text); }
+@media (hover: hover) {
+  .op:hover .op__lab { color: var(--accent); }
+}
+
+// ---------- text panels (shared by both scenes) ----------
+.orbit__text,
+.traj__text {
+  position: absolute;
+  z-index: 5;
+  left: var(--gl);
+  top: 50%;
+  width: min(40vw, 540px);
+  transform: translateY(-46%);
+  display: grid;
+}
+
+.ol {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(26px);
+  filter: blur(8px);
+  transition: opacity 0.7s var(--ease-out), transform 1s var(--ease-out), filter 0.8s var(--ease-out), visibility 0s linear 0.8s;
+
+  &.is-on {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    filter: blur(0);
+    transition: opacity 0.8s var(--ease-out) 0.12s, transform 1.1s var(--ease-out) 0.08s, filter 0.9s var(--ease-out) 0.1s, visibility 0s;
+  }
+
+  &.is-past { transform: translateY(-26px); }
+}
+
+.ol__name {
+  font-family: var(--font-display);
+  font-size: clamp(64px, 8.6vw, 132px);
+  line-height: 0.84;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  font-variation-settings: "wdth" 118, "wght" 780;
+  margin: 0;
+  font-weight: inherit;
+}
+
+.ol__role {
+  font-family: var(--font-display);
+  font-size: clamp(52px, 5.6vw, 84px);
+  line-height: 0.88;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  font-variation-settings: "wdth" 110, "wght" 780;
+  margin: 0;
+  font-weight: inherit;
+}
+
+.ol__line { margin: 0; max-width: 24em; color: var(--muted); font-size: clamp(16px, 1.45vw, 21px); line-height: 1.45; text-wrap: pretty; }
+
+.ol__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: var(--muted);
+
+  i { font-style: normal; color: var(--faint); }
+}
+
+.ol__sat { display: flex; flex-direction: column; gap: 12px; margin-top: 8px; }
+
+.ol__tools {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    @include mono-label(14px);
+
+    // satellite dot in the planet's colour
+    &::before { content: ""; flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--c); box-shadow: 0 0 12px var(--c); }
+  }
+}
+
+.ol__stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    padding: 7px 12px;
+    border: 1px solid rgba(246, 240, 244, 0.2);
+    border-radius: $radius-pill;
+    background: rgba(246, 240, 244, 0.04);
+    @include mono-label;
+  }
+}
+
+// ---------- trajectory ----------
+.traj__cam { will-change: transform; }
+.traj__ghost { fill: none; stroke: rgba(246, 240, 244, 0.1); stroke-width: 1; stroke-dasharray: 1 10; }
+.traj__path { fill: none; stroke: rgba(246, 240, 244, 0.14); stroke-width: 1; }
+.traj__line { fill: none; stroke-width: 2; stroke-linecap: round; filter: drop-shadow(0 0 6px rgba(255, 77, 141, 0.6)); }
+
+// station: a zero-size anchor on the path
+.ts {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.ts__ring {
+  position: absolute;
+  left: -16px;
+  top: -16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(246, 240, 244, 0.35);
+  transition: all 0.8s var(--ease-out);
+}
+
+.ts__core {
+  position: absolute;
+  left: -6px;
+  top: -6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(246, 240, 244, 0.55);
+  transition: all 0.6s;
+}
+
+.ts.is-on .ts__ring { left: -34px; top: -34px; width: 68px; height: 68px; border-color: var(--c); box-shadow: 0 0 40px var(--c); }
+.ts.is-on .ts__core { background: var(--text); box-shadow: 0 0 18px 4px var(--c); }
+.ts.is-reached .ts__core { background: var(--text); }
+
+.ts__tag {
+  position: absolute;
+  left: -20px;
+  top: 26px;
+  transition: top 0.8s var(--ease-out);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  white-space: nowrap;
+  @include mono-label(12px, 0.08em);
+  color: var(--muted);
+  text-align: left;
+
+  i { font-style: normal; color: var(--label); }
+}
+.ts.is-on .ts__tag { color: var(--text); top: 46px; }
+// last station near the right edge: tag hangs to the left
+.ts.is-flip .ts__tag { left: auto; right: -20px; text-align: right; align-items: flex-end; }
+
+.traj__probe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 14px 4px rgba(255, 181, 71, 0.85), 0 0 40px 10px rgba(255, 77, 141, 0.45);
+  will-change: transform;
+}
+
+@include tablet {
+  .orbit__text,
+  .traj__text { width: min(46vw, 460px); }
+  .ol__tools { grid-template-columns: 1fr; }
+}
+
+@include mobile {
+  .orbit { height: 400vh; }
+  .traj { height: 340vh; }
+  .orbit__head { top: calc(76px + env(safe-area-inset-top, 0px)); }
+  .orbit__text,
+  .traj__text { left: 20px; right: 20px; width: auto; top: auto; bottom: 76px; transform: none; }
+  .ol { gap: 14px; }
+  .ol__name { font-size: clamp(52px, 16vw, 80px); }
+  .ol__role { font-size: clamp(40px, 12vw, 60px); }
+  .ol__tools { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; }
+  .ol__tools li { font-size: 12px; }
+  .orbit__foot { bottom: 24px; }
+  .orbit__foot > span { display: none; }
+  .orbit__foot .dock__track { max-width: none; }
+  .op__lab { font-size: 11px; }
+}

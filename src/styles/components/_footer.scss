@@ -1,11 +1,21 @@
+@use "abstracts" as *;
+
+/* CONTACT: "event horizon". The orb becomes a singularity inside an accretion disk; the CTA sits at its edge.
+   --hp (0–1) grows the disk in as the footer scrolls into view. */
 .foot {
+  min-height: 100vh;
+  min-height: 100svh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
   padding: var(--sec) var(--gr) calc(28px + env(safe-area-inset-bottom, 0px)) var(--gl);
-  border-top: 1px solid var(--hair);
 
   &__cta {
     display: flex;
+    flex: 1;
     flex-wrap: wrap;
-    align-items: flex-end;
+    align-items: center;
     justify-content: space-between;
     gap: 36px;
   }
@@ -30,4 +40,71 @@
     button:hover,
     a:hover { color: var(--accent); }
   }
+
+  @include mobile {
+    &__cta { flex-direction: column; align-items: flex-start; justify-content: center; }
+  }
+}
+
+.hz {
+  --hp: 1;
+  position: relative;
+  width: min(42vw, 560px);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  perspective: 900px;
+  margin-right: clamp(0px, 4vw, 64px);
+  opacity: var(--hp);
+  transform: scale(calc(0.72 + var(--hp) * 0.28));
+
+  &__disk {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    transform: rotateX(74deg);
+    transition: filter 0.8s var(--ease-out), scale 0.8s var(--ease-out);
+    background: conic-gradient(from var(--ang), rgba(255, 181, 71, 0.95), rgba(255, 77, 141, 0.75) 50deg, rgba(106, 61, 240, 0.35) 130deg, transparent 180deg, rgba(106, 61, 240, 0.3) 250deg, rgba(255, 77, 141, 0.6) 320deg, rgba(255, 181, 71, 0.95));
+    -webkit-mask: radial-gradient(closest-side, transparent 50%, #000 56%, #000 64%, transparent 100%);
+    mask: radial-gradient(closest-side, transparent 50%, #000 56%, #000 64%, transparent 100%);
+    animation: holoSpin 10s linear infinite;
+
+    html[data-motion="off"] & { animation: none; }
+    @include reduced-motion { animation: none; }
+  }
+
+  // wider, fainter outer disk turning the other way
+  &__disk--2 { inset: -18%; opacity: 0.35; animation-duration: 26s; animation-direction: reverse; }
+
+  // CSS singularity, dimmed once the 3D orb is parked here
+  &__core {
+    position: absolute;
+    width: 30%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle, #050308 58%, rgba(255, 181, 71, 0.6) 64%, rgba(255, 77, 141, 0.25) 70%, transparent 76%);
+    box-shadow: 0 0 80px 10px rgba(255, 77, 141, 0.2);
+    transition: opacity 0.8s;
+
+    html[data-gl="on"] & { opacity: 0.35; }
+  }
+
+  &__btn { position: absolute; left: 50%; bottom: 4%; translate: -50% 0; z-index: 2; white-space: nowrap; }
+
+  @media (hover: hover) {
+    &:hover .hz__disk { filter: brightness(1.45) saturate(1.2); scale: 1.06; }
+  }
+
+  @include mobile { width: min(86vw, 420px); align-self: center; margin: 0; }
+}
+
+/* animatable angle for the conic accretion disk */
+@property --ang {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes holoSpin {
+  to { --ang: 360deg; }
 }

@@ -26,3 +26,9 @@ export const cssVar = (name: string, fallback: string) => {
   const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
   return v || fallback;
 };
+
+/** Smoothstep of x between a and b (0 before a, 1 after b; a may be greater than b). */
+export const smoothRange = (a: number, b: number, x: number) => {
+  const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
+};

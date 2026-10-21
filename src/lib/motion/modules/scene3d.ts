@@ -1,7 +1,5 @@
-import type { MotionContext } from "../context";
-import type { Glitch } from "./glitch";
-import type { Sound } from "./sound";
-import { $, cssVar, lerpK } from "../utils";
+import type { Anchor, MotionContext } from "../context";
+import { $, cssVar, lerpK, smoothRange } from "../utils";
 
 /** Section pose: x/y are fractions of the half-viewport, s = scale, shell = glass opacity, op = ring opacity, ex = core expansion. */
 interface Pose {
@@ -15,16 +13,20 @@ interface Pose {
 
 /**
  * 3D stage: one fixed WebGL canvas behind the page. A glass shell (design) wrapped around a wire core (code),
- * orbit rings, dust and a parallax galaxy. Scroll moves it between one pose per section; the shell peels
- * away in About to show the structure. three.js is loaded on demand so it never blocks first paint;
- * until then (or without WebGL) the CSS poster orb stands in.
+ * orbit rings, dust and a parallax galaxy. Scroll moves it between one pose per section: it becomes the sun
+ * of the skills orbit, a distant beacon on the trajectory, peels away to the bare structure in About and
+ * parks in the footer's event horizon. During the intro it sits centre stage while the stars warp in.
+ * three.js is loaded on demand so it never blocks first paint; until then (or without WebGL) the CSS
+ * poster orb stands in.
  */
-export function createScene3D(ctx: MotionContext, glitch: Glitch, sound: Sound) {
+export function createScene3D(ctx: MotionContext) {
   const { root } = ctx;
   const canvas = $<HTMLCanvasElement>(".gl3d");
   // resolves after the first frame is drawn (or on failure), so the intro can start on a ready stage
   let markReady: () => void = () => {};
   const ready = new Promise<void>((r) => (markReady = r));
+  // set once the scene exists: (re)starts the intro pose + star warp
+  let startIntro: () => void = () => {};
 
   Promise.all([import("three"), import("three/examples/jsm/utils/BufferGeometryUtils.js")])
     .then(async ([THREE, { mergeVertices }]) => {
@@ -80,7 +82,7 @@ export function createScene3D(ctx: MotionContext, glitch: Glitch, sound: Sound) 
       scene.add(rig);
 
       /* glass shell: vertices are displaced every frame from a copy of the rest positions */
-      const shellGeo = mergeVertices(new THREE.IcosahedronGeometry(1.25, 28));
+      const shellGeo = mergeVertices(new THREE.IcosahedronGeometry(1.25, 18));
       const base = Float32Array.from(shellGeo.attributes.position.array);
       const shellMat = new THREE.MeshPhysicalMaterial({
         color: 0xffffff,
@@ -147,7 +149,7 @@ export function createScene3D(ctx: MotionContext, glitch: Glitch, sound: Sound) 
 
       /* dust for depth */
       const dust = (() => {
-        const n = 520,
+        const n = 420,
           p = new Float32Array(n * 3);
         for (let i = 0; i < n; i++) {
           const r = 3 + Math.random() * 9,
@@ -188,7 +190,7 @@ export function createScene3D(ctx: MotionContext, glitch: Glitch, sound: Sound) 
           [AMBER, -10, -52, 14, 10, 0.07, -0.6], [PINK, 4, -62, 24, 16, 0.16, 0.2], [VIOLET, 0, -74, 30, 18, 0.22, -0.1],
         ];
         clouds.forEach(([col, px, py, sx, sy, o, rot]) => {
-          const m = new THREE.SpriteMaterial({ map: tex, color: col, transparent: true, opacity: o, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, rotation: rot });
+          const m = new THREE.SpriteMaterial({ map: tex, color: col, transparent: true, opacity: o * 0.62, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, rotation: rot });
           const s = new THREE.Sprite(m);
           s.position.set(px, py, -24);
           s.scale.set(sx, sy, 1);
@@ -232,8 +234,8 @@ export function createScene3D(ctx: MotionContext, glitch: Glitch, sound: Sound) 
           scene.add(pts);
           galaxy.push({ obj: pts, k, uT: mat.uniforms.uT });
         };
-        layer(isMob() ? 1100 : 2200, -30, 30, 12, -110, 3.4, 0.0016);
-        layer(isMob() ? 380 : 700, -12, 14, 7, -60, 2.6, 0.0028);
+        layer(isMob() ? 880 : 1760, -30, 30, 12, -110, 3.4, 0.0016);
+        layer(isMob() ? 300 : 560, -12, 14, 7, -60, 2.6, 0.0028);
       }
 
       const key = new THREE.PointLight(PINK, 30, 20);
@@ -243,22 +245,29 @@ export function createScene3D(ctx: MotionContext, glitch: Glitch, sound: Sound) 
       fill.position.set(3, -2, 3);
       scene.add(fill);
 
-      /* choreography: one pose per section */
+      /* choreography: one pose per section; orbit and foot poses follow screen anchors published by those scenes */
+      // pose that puts the orb (shell radius 1.25) exactly over an anchor; hh = half view height at the rig depth
+      const anchorPose = (a: Anchor, op: number): Pose => {
+        const w = innerWidth,
+          h = innerHeight,
+          hh = Math.tan(THREE.MathUtils.degToRad(16)) * 9;
+        return { x: (a.x - w / 2) / (w / 2), y: -(a.y - h / 2) / (h / 2), s: (a.d * hh) / (1.25 * h), shell: 1, op, ex: 0 };
+      };
       const POSES: Record<string, () => Pose> = {
         hero: () =>
           isMob() ? { x: 0.42, y: 0.18, s: 0.78, shell: 1, op: 0.85, ex: 0 } : isTab() ? { x: 0.42, y: 0.25, s: 0.9, shell: 1, op: 0.9, ex: 0 } : { x: 0.34, y: 0.02, s: 1.08, shell: 1, op: 1, ex: 0 },
-        skills: () => ({ x: 0.84, y: 0.66, s: 0.26, shell: 0.6, op: 0.7, ex: 0 }),
-        work: () => ({ x: -0.86, y: -0.64, s: 0.26, shell: 0.3, op: 0.7, ex: 0.2 }),
-        close: () => ({ x: 0.84, y: -0.6, s: 0.3, shell: 0.6, op: 0.7, ex: 0 }),
-        hello: () => (isMob() ? { x: 0.35, y: -0.42, s: 0.7, shell: 0.08, op: 0.9, ex: 1 } : { x: 0.6, y: -0.1, s: 0.95, shell: 0.04, op: 1, ex: 1 }),
-        foot: () => (isMob() ? { x: 0.3, y: 0.35, s: 0.75, shell: 1, op: 1, ex: 0 } : { x: 0.18, y: 0.1, s: 1.0, shell: 1, op: 1, ex: 0 }),
+        orbit: () => (ctx.anchors.orbit ? anchorPose(ctx.anchors.orbit, 0.65) : { x: 0.4, y: 0, s: 0.6, shell: 1, op: 1, ex: 0 }),
+        traj: () => (isMob() ? { x: 0.78, y: 0.78, s: 0.16, shell: 0.7, op: 0.6, ex: 0.3 } : { x: 0.86, y: 0.7, s: 0.2, shell: 0.7, op: 0.6, ex: 0.3 }),
+        hello: () => (isMob() ? { x: 0.4, y: 0.5, s: 0.55, shell: 0, op: 0.9, ex: 1 } : { x: 0.62, y: 0.05, s: 0.95, shell: 0, op: 1, ex: 1 }),
+        foot: () => (ctx.anchors.foot ? anchorPose(ctx.anchors.foot, 1) : { x: 0.5, y: 0, s: 0.4, shell: 1, op: 1, ex: 0 }),
       };
+      // centred while the intro plays
+      const introPoseOf = (): Pose => (isMob() ? { x: 0, y: 0.05, s: 0.85, shell: 1, op: 1, ex: 0 } : { x: 0, y: 0.02, s: 1.15, shell: 1, op: 1, ex: 0 });
       const SECS = (
         [
           ["hero", ".hero"],
-          ["skills", ".skills"],
-          ["work", ".work"],
-          ["close", ".close"],
+          ["orbit", ".orbit"],
+          ["traj", ".traj"],
           ["hello", ".hello"],
           ["foot", ".foot"],
         ] as const
@@ -277,27 +286,32 @@ export function createScene3D(ctx: MotionContext, glitch: Glitch, sound: Sound) 
         camera.aspect = w / h;
         camera.updateProjectionMatrix();
         const maxY = document.documentElement.scrollHeight - h;
-        marks = SECS.map((o, i) => {
+        marks = SECS.flatMap((o, i) => {
           const r = o.el.getBoundingClientRect(),
             top = r.top + scrollY;
+          // pinned scenes hold their pose for the whole pinned run
+          if (o.el.hasAttribute("data-scene"))
+            return [
+              { k: o.k, c: Math.min(maxY, top) },
+              { k: o.k, c: Math.min(maxY, top + r.height - h) },
+            ];
           const c = i === 0 ? 0 : i === SECS.length - 1 ? maxY : Math.min(maxY, top + r.height / 2 - h / 2);
-          return { k: o.k, c };
+          return [{ k: o.k, c }];
         });
       };
       ctx.measureFns.add(measure);
       measure();
 
-      const sm = (a: number, b: number, x: number) => {
-        const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
-        return t * t * (3 - 2 * t);
-      };
       const L = (a: number, b: number, t: number) => a + (b - a) * t;
+      let introPose = false;
       const target = (y: number) => {
+        introPose = !!root.dataset.intro;
+        if (introPose) return { pose: introPoseOf(), beat: 0 };
         let i = 0;
         while (i < marks.length - 1 && y >= marks[i + 1].c) i++;
         const a = marks[i],
           b = marks[i + 1] || a;
-        const t = b === a ? 0 : sm(0.18, 0.82, (y - a.c) / Math.max(1, b.c - a.c));
+        const t = b === a ? 0 : smoothRange(0.18, 0.82, (y - a.c) / Math.max(1, b.c - a.c));
         const A = POSES[a.k](),
           B = POSES[b.k]();
         const o = {} as Pose;
@@ -308,12 +322,19 @@ export function createScene3D(ctx: MotionContext, glitch: Glitch, sound: Sound) 
       const motionOn = () => root.dataset.motion === "on";
       const first = target(scrollY);
       const cur: Pose = { ...first.pose };
-      const P = { x: 0, y: 0, tx: 0, ty: 0, cx: null as number | null, cy: 0, near: 0, wasNear: false };
+      const P = { x: 0, y: 0, tx: 0, ty: 0, cx: null as number | null, cy: 0, near: 0 };
       let enter = motionOn() ? 0 : 1,
-        lastBeat = first.beat,
         lastY = scrollY,
         vel = 0,
-        clock = 0;
+        clock = 0,
+        sv = 0,
+        smoothY = scrollY,
+        // star "warp" (1 -> 0): the galaxy rushes in at intro start
+        warp = root.dataset.intro ? 1 : 0;
+      startIntro = () => {
+        enter = 0;
+        warp = 1;
+      };
       ctx.on(
         window,
         "pointermove",
@@ -357,19 +378,16 @@ export function createScene3D(ctx: MotionContext, glitch: Glitch, sound: Sound) 
       ctx.frameFns.add((_now, k, y) => {
         const on = motionOn();
         if (on) clock += 0.016 * k;
-        if (root.classList.contains("entered") && !root.dataset.intro) enter += (1 - enter) * lerpK(0.035, k);
+        if (introPose || (root.classList.contains("entered") && !root.dataset.intro)) enter += (1 - enter) * lerpK(introPose ? 0.022 : 0.035, k);
+        warp += (0 - warp) * lerpK(0.025, k);
 
         vel += ((y - lastY) / k - vel) * lerpK(0.12, k);
         lastY = y;
         const T = target(y),
           r = on ? lerpK(0.06, k) : 1;
+        // smoothed scroll for rotations and parallax, so wheel steps never jolt the scene
+        smoothY = smoothY + (y - smoothY) * (on ? lerpK(0.1, k) : 1);
         (Object.keys(T.pose) as (keyof Pose)[]).forEach((key) => (cur[key] += (T.pose[key] - cur[key]) * r));
-
-        // passing between sections tears the canvas
-        if (T.beat !== lastBeat) {
-          lastBeat = T.beat;
-          if (on && glitch.live()) glitch.burst(canvas, { n: 5, amp: 14, dur: 380, sliceP: 0.6 });
-        }
 
         P.x += (P.tx - P.x) * lerpK(0.08, k);
         P.y += (P.ty - P.y) * lerpK(0.08, k);
@@ -378,9 +396,9 @@ export function createScene3D(ctx: MotionContext, glitch: Glitch, sound: Sound) 
         const ease = 1 - Math.pow(1 - Math.min(1, enter), 3);
         rig.position.x = cur.x * hw + P.x * 0.12;
         rig.position.y = cur.y * hh - P.y * 0.08 - (1 - ease) * 0.8;
-        rig.scale.setScalar(Math.max(0.001, cur.s * (0.6 + 0.4 * ease)));
+        rig.scale.setScalar(Math.max(0.001, cur.s * (0.15 + 0.85 * ease)));
 
-        // pointer proximity on the projected centre: the object swells and ticks once when you reach it
+        // pointer proximity on the projected centre: the glass swells when you reach it
         proj.copy(rig.position).project(camera);
         const sx = ((proj.x + 1) / 2) * innerWidth,
           sy = ((1 - proj.y) / 2) * innerHeight;
@@ -388,21 +406,19 @@ export function createScene3D(ctx: MotionContext, glitch: Glitch, sound: Sound) 
         const d = P.cx == null ? 9999 : Math.hypot(P.cx - sx, P.cy - sy);
         const nearNow = d < rad && cur.op > 0.6;
         P.near += ((nearNow ? 1 : 0) - P.near) * lerpK(0.08, k);
-        if (nearNow && !P.wasNear) sound.play("soft", canvas);
-        P.wasNear = nearNow;
 
-        const sv = Math.min(1, Math.abs(vel) / 40);
-        if (on) displace(clock, 0.05 + 0.1 * P.near + 0.14 * sv);
+        sv += (Math.min(1, Math.abs(vel) / 60) - sv) * lerpK(0.04, k);
+        if (on && shell.visible) displace(clock, 0.05 + 0.08 * P.near + 0.06 * sv);
 
-        spin.rotation.y = clock * 0.22 + P.x * 0.5 + y * 0.0009;
+        spin.rotation.y = clock * 0.22 + P.x * 0.5 + smoothY * 0.0009;
         spin.rotation.x = clock * 0.11 - P.y * 0.35;
         ringA.rotation.z = clock * 0.3;
-        ringB.rotation.z = -clock * 0.2 + y * 0.0006;
+        ringB.rotation.z = -clock * 0.2 + smoothY * 0.0006;
         ringA.material.opacity = 0.9 * cur.op;
         ringB.material.opacity = 0.6 * cur.op;
 
         const sh = Math.max(0, Math.min(1, cur.shell));
-        shell.visible = sh > 0.06;
+        shell.visible = sh > 0.003;
         shellMat.opacity = sh;
         shell.scale.setScalar(1 + (1 - sh) * 0.4);
         const ex = cur.ex;
@@ -410,9 +426,11 @@ export function createScene3D(ctx: MotionContext, glitch: Glitch, sound: Sound) 
         wireMat.emissiveIntensity = 0.7 + 0.35 * Math.max(ex, 1 - sh);
         nodesMat.size = 0.07 + ex * 0.04;
         inner.rotation.set(clock * 0.8, clock * 1.1, 0);
-        dust.rotation.y = clock * 0.02 + y * 0.00015;
+        dust.rotation.y = clock * 0.02 + smoothY * 0.00015 + warp * 1.2;
+        dust.scale.setScalar(1 + warp * 2.5);
         galaxy.forEach((g) => {
-          g.obj.position.y = y * g.k;
+          g.obj.scale.setScalar(1 + warp * 1.6);
+          g.obj.position.y = smoothY * g.k;
           g.obj.position.x = -P.x * g.k * 160;
           if (g.uT) g.uT.value = clock;
         });
@@ -421,7 +439,7 @@ export function createScene3D(ctx: MotionContext, glitch: Glitch, sound: Sound) 
         if (!shown) {
           shown = true;
           root.dataset.gl = "on";
-          // after the fade-in, drop the transition so glitch bursts on the canvas stay crisp
+          // after the fade-in, drop the transition
           fadeTimer = window.setTimeout(() => (canvas.style.transition = "none"), 1300);
           markReady();
         }
@@ -446,5 +464,9 @@ export function createScene3D(ctx: MotionContext, glitch: Glitch, sound: Sound) 
       markReady();
     });
 
-  return { ready };
+  return {
+    ready,
+    /** Intro pose + star warp (the pose itself follows html[data-intro]). */
+    intro: (v: boolean) => v && startIntro(),
+  };
 }

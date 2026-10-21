@@ -1,12 +1,11 @@
 import type { MotionContext } from "../context";
 import type { Counters } from "./counters";
-import type { Glitch } from "./glitch";
 import { $$ } from "../utils";
 
 export type Reveals = ReturnType<typeof createReveals>;
 
 /** Scroll-triggered entrances: [data-reveal] fade-up, [data-words] word cascade, [data-count] counters. */
-export function createReveals(ctx: MotionContext, counters: Counters, glitch: Glitch) {
+export function createReveals(ctx: MotionContext, counters: Counters) {
   const { S, ease } = ctx;
   let io: IntersectionObserver | null = null;
   let wio: IntersectionObserver | null = null;
@@ -17,7 +16,6 @@ export function createReveals(ctx: MotionContext, counters: Counters, glitch: Gl
       n.style.opacity = "";
       return;
     }
-    if (glitch.reveal(n, delay)) return;
     const a = n.animate([{ opacity: 0, transform: "translateY(48px)" }, { opacity: 1, transform: "none" }], { duration: 1100, delay, easing: ease.out, fill: "both" });
     a.onfinish = () => a.cancel();
     n.style.opacity = "";
@@ -26,7 +24,6 @@ export function createReveals(ctx: MotionContext, counters: Counters, glitch: Gl
   const wordsIn = (p: HTMLElement) => {
     p.classList.add("is-in");
     if (!S.on) return;
-    if (glitch.words(p)) return;
     $$(".wd", p).forEach((w, i) => {
       const rest = getComputedStyle(w).fontVariationSettings;
       w.animate(

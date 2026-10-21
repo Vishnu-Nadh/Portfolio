@@ -1,20 +1,15 @@
 import type { MotionContext } from "../context";
 import type { Cursor } from "./cursor";
-import type { Glitch } from "./glitch";
 import type { SmoothScroll } from "./smoothScroll";
 import { $, $$, el, nextFrame, sleep } from "../utils";
 
 export type PageTransition = ReturnType<typeof createPageTransition>;
 
-/**
- * Accent bars slide across (from alternating sides in glitch mode) with a big kinetic label,
- * the action runs underneath, then everything clears. The label tears in/out with the glitch layer.
- */
-export function createPageTransition(ctx: MotionContext, cursor: Cursor, scroll: SmoothScroll, glitch: Glitch) {
+/** Accent bars wipe up with a big kinetic label, the action runs underneath, then everything wipes away. */
+export function createPageTransition(ctx: MotionContext, cursor: Cursor, scroll: SmoothScroll) {
   const { S, flags, ease } = ctx;
   const trans = $(".trans");
-  const barsEl = $(".trans__bars");
-  const bars = $$(".trans__bar", barsEl);
+  const bars = $$(".trans__bar");
   const tLabel = $(".trans__label");
   const tMeta = $(".trans__meta");
   const tSub = $(".trans__sub");
@@ -52,7 +47,7 @@ export function createPageTransition(ctx: MotionContext, cursor: Cursor, scroll:
     const mainEl = $("main");
 
     bars.forEach((b, i) =>
-      b.animate(glitch.bars(i, "in") ?? [{ transform: "translateY(101%)" }, { transform: "translateY(0)" }], { duration: 300, delay: 22 * i, easing: ease.io, fill: "forwards" }),
+      b.animate([{ transform: "translateY(101%)" }, { transform: "translateY(0)" }], { duration: 300, delay: 22 * i, easing: ease.io, fill: "forwards" }),
     );
     mainEl.animate([{ transform: "none", opacity: 1 }, { transform: "translateY(-10vh)", opacity: 0.3 }], { duration: 380, easing: ease.io, fill: "forwards" });
     chars.forEach((c, i) =>
@@ -67,7 +62,6 @@ export function createPageTransition(ctx: MotionContext, cursor: Cursor, scroll:
     tMeta.animate([{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }], { duration: 220, delay: 140, easing: ease.out, fill: "both" });
     tLine.style.transformOrigin = "left";
     tLine.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration: 380, delay: 130, easing: ease.io, fill: "both" });
-    glitch.transIn(tLabel);
 
     await sleep(300 + 4 * 22 + 200);
     if (!flags.alive) return;
@@ -82,9 +76,8 @@ export function createPageTransition(ctx: MotionContext, cursor: Cursor, scroll:
     tLine.animate([{ transform: "scaleX(1)" }, { transform: "scaleX(0)" }], { duration: 260, easing: ease.io, fill: "forwards" });
     mainEl.getAnimations().forEach((a) => a.cancel());
     mainEl.animate([{ transform: "translateY(14vh)" }, { transform: "none" }], { duration: 560, delay: 60, easing: ease.out });
-    glitch.transOut();
     const outs = bars.map((b, i) =>
-      b.animate(glitch.bars(i, "out") ?? [{ transform: "translateY(0)" }, { transform: "translateY(-101%)" }], { duration: 340, delay: 40 + 22 * i, easing: ease.io, fill: "forwards" }),
+      b.animate([{ transform: "translateY(0)" }, { transform: "translateY(-101%)" }], { duration: 340, delay: 40 + 22 * i, easing: ease.io, fill: "forwards" }),
     );
     try {
       await outs[outs.length - 1].finished;

@@ -1,26 +1,27 @@
 import type { Metadata, Viewport } from "next";
-import { Anybody, Bricolage_Grotesque, JetBrains_Mono } from "next/font/google";
+import { Hubot_Sans, JetBrains_Mono, Mona_Sans } from "next/font/google";
 import { portfolio } from "@/data/portfolio";
 import { bootScript } from "@/lib/motion/bootScript";
 import "@/styles/main.scss";
 
-// Type rule: Anybody when it is loud (big, uppercase), Bricolage whenever it is being read,
-// JetBrains Mono for labels and buttons. The kinetic type animates Anybody's wdth + wght axes.
+// Type rule: Hubot Sans (wide, engineered, space-age) when it is loud; its sibling Mona Sans whenever it
+// is being read; JetBrains Mono for labels. The kinetic type animates the wdth + wght axes.
 // adjustFontFallback is off so missing glyphs fall through to the stacks in
 // styles/abstracts/_tokens.scss rather than a metric-scaled Arial.
-const anybody = Anybody({
+const hubot = Hubot_Sans({
   subsets: ["latin", "latin-ext"],
   axes: ["wdth"],
   style: ["normal", "italic"],
-  variable: "--font-anybody",
+  variable: "--font-hubot",
   display: "swap",
   adjustFontFallback: false,
 });
 
-const bricolage = Bricolage_Grotesque({
+const mona = Mona_Sans({
   subsets: ["latin", "latin-ext"],
-  axes: ["opsz", "wdth"],
-  variable: "--font-bricolage",
+  axes: ["wdth"],
+  style: ["normal", "italic"],
+  variable: "--font-mona",
   display: "swap",
   adjustFontFallback: false,
 });
@@ -47,7 +48,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     // the boot script sets data-* on <html> before hydration
-    <html lang="en" className={`${anybody.variable} ${bricolage.variable} ${jetbrains.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${hubot.variable} ${mona.variable} ${jetbrains.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: bootScript }} />
       </head>

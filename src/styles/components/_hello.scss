@@ -1,28 +1,57 @@
 @use "abstracts" as *;
 
+/* ABOUT: pinned "signal". The statement lights up word by word as you scroll (--lit per word),
+   beside the wireframe core; gradient lines fill in above the stats. */
 .hello {
-  padding: var(--sec) var(--gr) var(--sec) var(--gl);
-  border-top: 1px solid var(--hair);
+  position: relative;
+  height: 230vh;
+  padding: 0;
+  border-top: 0;
+
+  &__pin {
+    position: sticky;
+    top: 0;
+    min-height: 100vh;
+    min-height: 100svh;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 96px var(--gr) 48px var(--gl);
+  }
 
   &__text {
     text-wrap: balance;
     max-width: 22ch;
     margin-top: 28px;
-    font-size: clamp(34px, 6.2vw, 108px);
+    font-size: clamp(30px, min(6.2vw, 8.6vh), 108px);
     line-height: 0.98;
     letter-spacing: -0.02em;
     font-variation-settings: "wdth" 80, "wght" 650;
+
+    .wd { transition: opacity 0.25s linear; }
   }
 
   &__stats {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 28px;
-    margin-top: clamp(56px, 9vh, 110px);
+    margin-top: clamp(28px, 6vh, 110px);
 
     @include mobile { grid-template-columns: minmax(0, 1fr); gap: 20px; }
   }
+
+  @include mobile {
+    height: 200vh;
+
+    &__pin { padding: 88px 20px 40px; justify-content: flex-end; }
+  }
 }
+
+// the pin's vertical padding is fixed at every width
+.hello__pin { padding-top: 72px !important; padding-bottom: 28px !important; }
+
+html[data-js] .hello__text .wd { opacity: var(--lit, 1); }
 
 /* word mask + word, used by SplitWords */
 .wm {
@@ -36,15 +65,35 @@
 .wd { display: inline-block; }
 
 .stat {
+  position: relative;
   padding-top: 16px;
-  border-top: 1px solid var(--hair);
 
   &__n {
     display: block;
     margin-top: 10px;
-    font-size: clamp(48px, 7vw, 120px);
+    font-size: clamp(36px, min(7vw, 10vh), 120px);
     line-height: 0.9;
     font-variation-settings: var(--fvs-display);
     font-variant-numeric: tabular-nums;
+  }
+
+  // hairline that fills with a violet → pink → amber gradient as the section is read
+  &__line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background: rgba(246, 240, 244, 0.12);
+    overflow: hidden;
+
+    i {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, var(--violet), var(--accent) 55%, var(--accent-2));
+      transform: scaleX(0);
+      transform-origin: left;
+      box-shadow: 0 0 10px rgba(255, 77, 141, 0.6);
+    }
   }
 }

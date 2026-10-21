@@ -2,16 +2,14 @@ import type { PortfolioData } from "@/types/portfolio";
 import { createContext } from "./context";
 import { $, $$, lerpK, sleep } from "./utils";
 import { createSmoothScroll } from "./modules/smoothScroll";
-import { createSound } from "./modules/sound";
-import { createGlitch } from "./modules/glitch";
 import { createToast } from "./modules/toast";
 import { createClock } from "./modules/clock";
 import { createCursor } from "./modules/cursor";
 import { createKineticType } from "./modules/kineticType";
-import { createSkills } from "./modules/skills";
-import { createExperience } from "./modules/experience";
-import { createMobileScrub } from "./modules/mobileScrub";
-import { createCloseStrip } from "./modules/closeStrip";
+import { createOrbit } from "./modules/orbit";
+import { createTrajectory } from "./modules/trajectory";
+import { createSignal } from "./modules/signal";
+import { createHorizon } from "./modules/horizon";
 import { createLogoFill } from "./modules/logoFill";
 import { createMagnets } from "./modules/magnets";
 import { createCounters } from "./modules/counters";
@@ -21,7 +19,6 @@ import { createNavigation } from "./modules/navigation";
 import { createMotionToggle } from "./modules/motionToggle";
 import { createIntro } from "./modules/intro";
 import { createScene3D } from "./modules/scene3d";
-import { createTiltCards } from "./modules/tiltCards";
 
 declare global {
   interface Window {
@@ -39,25 +36,21 @@ export function createMotionEngine(data: PortfolioData): () => void {
   const ctx = createContext(data);
   const { S, root } = ctx;
 
-  // ---------- cross-cutting layers ----------
-  const sound = createSound(ctx);
-  const glitch = createGlitch(ctx, sound);
-
   // ---------- modules (order matters: it is the per-frame order) ----------
   const scroll = createSmoothScroll(ctx);
   createToast(ctx);
   createClock(ctx);
   const cursor = createCursor(ctx);
   const hero = createKineticType(ctx);
-  const skills = createSkills(ctx);
-  const experience = createExperience(ctx);
-  createMobileScrub(ctx, skills, experience);
-  const closeStrip = createCloseStrip(ctx);
   createLogoFill(ctx);
   const magnets = createMagnets(ctx);
   const counters = createCounters(ctx);
-  const reveals = createReveals(ctx, counters, glitch);
-  createTiltCards(ctx);
+  const reveals = createReveals(ctx, counters);
+  // pinned scroll scenes
+  createSignal(ctx);
+  createHorizon(ctx);
+  createOrbit(ctx, scroll);
+  createTrajectory(ctx, scroll);
 
   // ---------- measurement ----------
   let measureRaf = 0;
@@ -88,7 +81,6 @@ export function createMotionEngine(data: PortfolioData): () => void {
   // ---------- page entrance ----------
   function enterPage() {
     if (S.on && !root.classList.contains("entered")) {
-      glitch.enter();
       // underline / dash draw in once the name has landed
       [$(".hero__dash"), $(".hero__ul")].forEach((n) => {
         if (!n) return;
@@ -122,17 +114,17 @@ export function createMotionEngine(data: PortfolioData): () => void {
     measureAll();
   }
 
-  const transition = createPageTransition(ctx, cursor, scroll, glitch);
+  const transition = createPageTransition(ctx, cursor, scroll);
   createNavigation(ctx, scroll, transition);
   const toggle = createMotionToggle(ctx, {
     cursor,
     scroll,
-    resettables: [hero, closeStrip, magnets],
+    resettables: [hero, magnets],
     setUpReveals: reveals.setUp,
     queueMeasure,
   });
-  const intro = createIntro(ctx, cursor, scroll, glitch, enterPage);
-  const stage = createScene3D(ctx, glitch, sound);
+  const stage = createScene3D(ctx);
+  const intro = createIntro(ctx, cursor, scroll, stage, enterPage);
 
   // ---------- ticker ----------
   let rafId = 0,

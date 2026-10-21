@@ -1,19 +1,19 @@
 import type { MotionContext } from "../context";
 import type { Cursor } from "./cursor";
-import type { Glitch } from "./glitch";
 import type { SmoothScroll } from "./smoothScroll";
 import { $, $$, sleep } from "../utils";
 
 export const INTRO_SEEN_KEY = "folio-intro";
 
-const HOLD = "steps(1, end)";
+/** gentle out-curve used throughout the intro: no hard cuts */
+const SOFT = "cubic-bezier(.22,1,.36,1)";
 
 /**
- * Preloader (datamosh): wordmark letters rise and flex their axes under a scanline while a counter
- * runs to 100; then the lockup tears apart into scattered shards and the screen dissolves in tiles,
- * revealing the page. Click / Esc fast-forwards (4x).
+ * Galaxy intro: stars rush in and settle, the orb condenses at centre, the name surfaces through soft
+ * focus while a counter runs to 100, then the lockup blurs away, the orb glides to its hero pose and the
+ * page fades up underneath. Click / Esc fast-forwards (4x).
  */
-export function createIntro(ctx: MotionContext, cursor: Cursor, scroll: SmoothScroll, glitch: Glitch, enterPage: () => void) {
+export function createIntro(ctx: MotionContext, cursor: Cursor, scroll: SmoothScroll, stage: { intro: (v: boolean) => void }, enterPage: () => void) {
   const { S, flags, root, ease } = ctx;
   const intro = $(".intro");
   let rate = 1;
@@ -23,6 +23,8 @@ export function createIntro(ctx: MotionContext, cursor: Cursor, scroll: SmoothSc
     flags.introRunning = true;
     rate = 1;
     root.dataset.intro = "playing";
+    // the engine is alive: the boot failsafe must not cut this (longer) intro short
+    clearTimeout(window.__folioFailsafe);
     try {
       sessionStorage.setItem(INTRO_SEEN_KEY, "1");
     } catch {
@@ -32,8 +34,7 @@ export function createIntro(ctx: MotionContext, cursor: Cursor, scroll: SmoothSc
     scroll.pause();
 
     const letters = $$(".intro__ch", intro),
-      box = $(".intro__box", intro),
-      logo = $(".intro__logo", intro);
+      box = $(".intro__box", intro);
     const meta = $(".intro__meta", intro),
       count = $(".intro__count", intro),
       line = $(".intro__line", intro),
@@ -68,21 +69,14 @@ export function createIntro(ctx: MotionContext, cursor: Cursor, scroll: SmoothSc
     };
     ctx.cleanup(detach);
 
+    // orb to centre stage, stars warp in
+    stage.intro(true);
     letters.forEach((l, i) => {
-      play(l, [{ transform: "translateY(115%)" }, { transform: "none" }], { duration: 650, delay: 80 + 30 * i, easing: ease.out, fill: "both" });
-      play(
-        l,
-        [
-          { fontVariationSettings: '"wdth" 125, "wght" 150' },
-          { fontVariationSettings: '"wdth" 62, "wght" 900', offset: 0.45 },
-          { fontVariationSettings: restFvs(!!l.dataset.italic) },
-        ],
-        { duration: 750, delay: 100 + 22 * i, easing: "ease-in-out", fill: "both" },
-      );
+      play(l, [{ transform: "translateY(40%)", opacity: 0, filter: "blur(14px)" }, { transform: "none", opacity: 1, filter: "blur(0px)" }], { duration: 1100, delay: 520 + 45 * i, easing: SOFT, fill: "both" });
+      play(l, [{ fontVariationSettings: '"wdth" 125, "wght" 150' }, { fontVariationSettings: restFvs(!!l.dataset.italic) }], { duration: 1400, delay: 520 + 45 * i, easing: SOFT, fill: "both" });
     });
-    play(box, [{ transform: "scale(0) rotate(-90deg)" }, { transform: "none" }], { duration: 650, delay: 220, easing: ease.out, fill: "forwards" });
-    play(meta, [{ opacity: 0 }, { opacity: 1 }], { duration: 400, delay: 140, fill: "both" });
-    glitch.introIn({ letters, logo });
+    play(box, [{ transform: "scale(.4)", opacity: 0, filter: "blur(10px)" }, { transform: "none", opacity: 1, filter: "blur(0px)" }], { duration: 1100, delay: 700, easing: SOFT, fill: "both" });
+    play(meta, [{ opacity: 0, transform: "translateY(12px)" }, { opacity: 1, transform: "none" }], { duration: 900, delay: 600, easing: SOFT, fill: "both" });
 
     // counter + progress line, driven by accumulated (rate-scaled) time
     await new Promise<void>((resolve) => {
@@ -92,54 +86,40 @@ export function createIntro(ctx: MotionContext, cursor: Cursor, scroll: SmoothSc
         if (!flags.alive) return resolve();
         acc += Math.max(0, t - last) * rate;
         last = t;
-        const e = 1 - Math.pow(1 - Math.min(1, acc / 1000), 3);
+        const e = 1 - Math.pow(1 - Math.min(1, acc / 2200), 3);
         count.textContent = String(Math.round(100 * e)).padStart(3, "0");
         line.style.transform = `scaleX(${e.toFixed(4)})`;
-        glitch.countTick(count, e);
-        if (acc >= 1120) resolve();
+        if (acc >= 2500) resolve();
         else requestAnimationFrame(step);
       };
       requestAnimationFrame(step);
     });
     if (!flags.alive) return;
 
-    // the lockup tears apart into scattered shards; the accent box shreds instead of taking over the screen
-    glitch.introOut({ logo });
-    letters.forEach((l, i) => play(l, [{ transform: "none" }, { transform: "translateY(-115%)" }], { duration: 420, delay: 14 * i, easing: ease.io, fill: "forwards" }));
-    play(meta, [{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: "forwards" });
-    play(line, [{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: "forwards" });
-    glitch.frags(intro, { n: 34, dur: 640, rate });
-    await fin(
-      play(
-        box,
-        [
-          { transform: "none", opacity: 1, easing: HOLD },
-          { transform: "translateX(-14px) scaleX(1.5)", opacity: 1, offset: 0.25, easing: HOLD },
-          { transform: "translateX(20px) scaleY(0.35)", opacity: 0.5, offset: 0.5, easing: HOLD },
-          { transform: "translateX(-8px) scaleX(2.4) scaleY(0.1)", opacity: 1, offset: 0.75, easing: HOLD },
-          { transform: "scaleX(3) scaleY(0)", opacity: 0 },
-        ],
-        { duration: 460, delay: 120, fill: "forwards" },
-      ),
+    // the lockup lifts away into soft focus
+    letters.forEach((l, i) =>
+      play(l, [{ transform: "none", opacity: 1, filter: "blur(0px)" }, { transform: "translateY(-30%)", opacity: 0, filter: "blur(12px)" }], { duration: 800, delay: 25 * i, easing: ease.io, fill: "forwards" }),
     );
+    play(box, [{ opacity: 1, filter: "blur(0px)" }, { opacity: 0, filter: "blur(10px)", transform: "scale(1.4)" }], { duration: 800, easing: ease.io, fill: "forwards" });
+    play(meta, [{ opacity: 1 }, { opacity: 0 }], { duration: 500, fill: "forwards" });
+    await fin(play(line, [{ opacity: 1 }, { opacity: 0 }], { duration: 600, fill: "forwards" }));
     if (!flags.alive) return;
 
-    // the screen dissolves in tiles over the page as it enters
-    glitch.landing();
-    const diss = glitch.dissolve(intro, { dur: 860, rate });
-    bg.style.opacity = "0";
+    // the orb glides to its hero pose (it follows html[data-intro]) while the page fades up underneath
+    stage.intro(false);
+    const mainEl = $("main"),
+      header = $("header");
+    delete root.dataset.intro;
     root.style.overflow = "";
     scroll.resume();
     enterPage();
-    play($("main"), [{ transform: "scale(1.04)", opacity: 0.5 }, { transform: "none", opacity: 1 }], { duration: 1000, easing: ease.out });
-    glitch.frags(intro, { n: 20, dur: 520, delay: 160, rate });
-    await diss;
+    play(mainEl, [{ opacity: 0, filter: "blur(8px)", transform: "translateY(24px)" }, { opacity: 1, filter: "blur(0px)", transform: "none" }], { duration: 1400, easing: SOFT });
+    play(header, [{ opacity: 0 }, { opacity: 1 }], { duration: 1200, delay: 300, easing: SOFT, fill: "backwards" });
+    await fin(play(bg, [{ opacity: 1 }, { opacity: 0 }], { duration: 1200, easing: SOFT, fill: "forwards" }));
     if (!flags.alive) return;
 
-    glitch.landed();
     detach();
     delete intro.dataset.cursor;
-    delete root.dataset.intro;
     intro.getAnimations({ subtree: true }).forEach((a) => a.cancel());
     bg.style.opacity = "";
     flags.introRunning = false;

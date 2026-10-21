@@ -9,10 +9,6 @@
 
   &__bars { position: absolute; inset: 0; display: flex; }
 
-  // datamosh glitch mode: bars stack as horizontal strips that slide in from alternating sides
-  html[data-glx="c"] &__bars { flex-direction: column; }
-  html[data-glx="c"] &__bar { height: auto; margin: 0 0 -1px; }
-
   &__bar {
     flex: 1;
     height: 100%;

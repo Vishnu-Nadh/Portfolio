@@ -8,7 +8,6 @@ import { INTRO_SEEN_KEY } from "./modules/intro";
 export const bootScript = `(function () {
   var r = document.documentElement;
   r.setAttribute("data-js", "");
-  r.setAttribute("data-glx", "c");
   var reduce = false, seen = false;
   try { reduce = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) {}
   try { seen = sessionStorage.getItem("${INTRO_SEEN_KEY}") === "1"; } catch (e) {}
