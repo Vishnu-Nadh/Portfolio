@@ -111,9 +111,9 @@ export function createKineticType(ctx: MotionContext) {
       L.w = L.chars.map((c) => widthCache.get(c)!.d);
       L.base = L.chars.reduce((s, c) => s + widthCache.get(c)!.base, 0);
     });
-    // every line shares one size: the widest line fills ~88% of the column...
+    // every line shares one size: the widest line fills ~97% of the column...
     const maxBase = Math.max(...klines.map((L) => L.base));
-    let fs = (contW * (compact ? 0.9 : 0.88)) / maxBase;
+    let fs = (contW * (compact ? 0.94 : 0.97)) / maxBase;
     if (!compact) {
       // ...capped so the name, eyebrow and copy all fit the hero body height
       const hb = $(".hero__body"),

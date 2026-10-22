@@ -19,6 +19,8 @@ import { createNavigation } from "./modules/navigation";
 import { createMotionToggle } from "./modules/motionToggle";
 import { createIntro } from "./modules/intro";
 import { createScene3D } from "./modules/scene3d";
+import { createContact } from "./modules/contact";
+import { createMeteor } from "./modules/meteor";
 
 declare global {
   interface Window {
@@ -51,6 +53,9 @@ export function createMotionEngine(data: PortfolioData): () => void {
   createHorizon(ctx);
   createOrbit(ctx, scroll);
   createTrajectory(ctx, scroll);
+  createMeteor(ctx, scroll);
+  // 3D stage (renders last each frame; the transition, contact console and intro drive it)
+  const stage = createScene3D(ctx);
 
   // ---------- measurement ----------
   let measureRaf = 0;
@@ -114,7 +119,7 @@ export function createMotionEngine(data: PortfolioData): () => void {
     measureAll();
   }
 
-  const transition = createPageTransition(ctx, cursor, scroll);
+  const transition = createPageTransition(ctx, cursor, scroll, stage);
   createNavigation(ctx, scroll, transition);
   const toggle = createMotionToggle(ctx, {
     cursor,
@@ -123,7 +128,7 @@ export function createMotionEngine(data: PortfolioData): () => void {
     setUpReveals: reveals.setUp,
     queueMeasure,
   });
-  const stage = createScene3D(ctx);
+  createContact(ctx, scroll, stage);
   const intro = createIntro(ctx, cursor, scroll, stage, enterPage);
 
   // ---------- ticker ----------
@@ -158,11 +163,10 @@ export function createMotionEngine(data: PortfolioData): () => void {
       enterPage();
     }
   };
-  // hero metrics need the real font, and the intro should play over a ready 3D stage (shader
-  // compilation mid-intro would stall it), so wait for both, each bounded
-  const fontsReady = document.fonts?.ready ? Promise.race([document.fonts.ready, sleep(1800)]) : Promise.resolve();
-  const stageReady = Promise.race([stage.ready, sleep(3000)]);
-  Promise.all([fontsReady, stageReady]).then(() => {
+  // hero metrics need the real font, so wait for it (bounded) before the first reveal.
+  // The intro does not wait for the 3D stage: its horizon draw covers the stage's start-up.
+  const ready = document.fonts?.ready ? Promise.race([document.fonts.ready, sleep(1800)]) : Promise.resolve();
+  ready.then(() => {
     if (!ctx.flags.alive) return;
     hero.invalidate();
     measureAll();

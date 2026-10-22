@@ -33,6 +33,17 @@
   transition: background 0.25s, border-color 0.25s, opacity 0.3s;
 }
 
+// multi-word labels (planet / company names) wrap and centre inside the ring
+.cur-ring > * {
+  display: block;
+  width: 100%;
+  padding: 0 10px;
+  box-sizing: border-box;
+  text-align: center;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
 // the native cursor is hidden only when the custom one is live (fine pointer + motion on)
 body[data-nocursor],
 body[data-nocursor] * { cursor: none !important; }

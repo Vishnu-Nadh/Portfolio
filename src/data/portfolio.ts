@@ -18,6 +18,7 @@ export const portfolio: PortfolioData = {
   timeZone: "Asia/Kolkata",
 
   nav: [
+    { label: "Skills", target: "skills", variant: "link" },
     { label: "Experience", target: "work", variant: "link" },
     { label: "About", target: "hello", variant: "link" },
     { label: "Contact", target: "contact", variant: "cta", cursor: "Say hi" },
@@ -25,6 +26,7 @@ export const portfolio: PortfolioData = {
 
   transitions: {
     top: ["Home", "Top"],
+    skills: ["Skills", "What I do"],
     work: ["Experience", "Where I've worked"],
     hello: ["About", "Hello"],
     contact: ["Contact", "Say hi"],
@@ -101,7 +103,24 @@ export const portfolio: PortfolioData = {
     toTop: "Back to top ↑",
   },
 
-  toasts: {
-    contact: "Contact link goes here",
+  contact: {
+    eyebrow: "(Transmission)",
+    close: "Close ✕",
+    title: "Send a signal",
+    name: "Your name",
+    email: "Email",
+    frequency: "Frequency",
+    topics: [
+      { value: "project", label: "New project" },
+      { value: "collab", label: "Collaboration" },
+      { value: "hi", label: "Just saying hi" },
+    ],
+    message: "Message",
+    meter: "Signal strength",
+    submit: "Transmit →",
+    submitCursor: "Send",
+    doneTitle: "Signal received.",
+    doneText: "Thanks for reaching out. I'll reply within two days.",
+    doneBack: "Back to the galaxy",
   },
 };

@@ -2,7 +2,7 @@ import type { Anchor, MotionContext } from "../context";
 import { $, cssVar, lerpK, smoothRange } from "../utils";
 
 /** Section pose: x/y are fractions of the half-viewport, s = scale, shell = glass opacity, op = ring opacity, ex = core expansion. */
-interface Pose {
+export interface Pose {
   x: number;
   y: number;
   s: number;
@@ -10,6 +10,18 @@ interface Pose {
   op: number;
   ex: number;
 }
+
+/** A pose the intro drives directly. full = skip the entrance scale-up; rate = easing rate toward it. */
+export interface IntroPose extends Pose {
+  full?: number;
+  rate?: number;
+}
+
+export type Stage = ReturnType<typeof createScene3D>;
+
+// three.js is fetched once and shared; preloadThree() starts it early (the design preloads it in <head>)
+let threeLoad: Promise<[typeof import("three"), typeof import("three/examples/jsm/utils/BufferGeometryUtils.js")]> | null = null;
+export const preloadThree = () => (threeLoad ??= Promise.all([import("three"), import("three/examples/jsm/utils/BufferGeometryUtils.js")]));
 
 /**
  * 3D stage: one fixed WebGL canvas behind the page. A glass shell (design) wrapped around a wire core (code),
@@ -25,10 +37,19 @@ export function createScene3D(ctx: MotionContext) {
   // resolves after the first frame is drawn (or on failure), so the intro can start on a ready stage
   let markReady: () => void = () => {};
   const ready = new Promise<void>((r) => (markReady = r));
-  // set once the scene exists: (re)starts the intro pose + star warp
-  let startIntro: () => void = () => {};
+  // stage controls; real implementations are installed once the scene exists
+  const ctl = {
+    startIntro: () => {},
+    warp: (v: number) => void v,
+    snap: (p: IntroPose) => void p,
+    setWarp: (v: number, hold: boolean) => void [v, hold],
+    release: () => {},
+    heroPose: (): IntroPose | null => null,
+  };
+  // pose the intro publishes; it can be set before the scene loads so the first frame already uses it
+  let introOverride: IntroPose | null = null;
 
-  Promise.all([import("three"), import("three/examples/jsm/utils/BufferGeometryUtils.js")])
+  preloadThree()
     .then(async ([THREE, { mergeVertices }]) => {
       if (!ctx.flags.alive) return;
 
@@ -255,7 +276,7 @@ export function createScene3D(ctx: MotionContext) {
       };
       const POSES: Record<string, () => Pose> = {
         hero: () =>
-          isMob() ? { x: 0.42, y: 0.18, s: 0.78, shell: 1, op: 0.85, ex: 0 } : isTab() ? { x: 0.42, y: 0.25, s: 0.9, shell: 1, op: 0.9, ex: 0 } : { x: 0.34, y: 0.02, s: 1.08, shell: 1, op: 1, ex: 0 },
+          isMob() ? { x: 0.42, y: 0.18, s: 0.39, shell: 1, op: 0.85, ex: 0 } : isTab() ? { x: 0.42, y: 0.25, s: 0.9, shell: 1, op: 0.9, ex: 0 } : { x: 0.34, y: 0.02, s: 1.08, shell: 1, op: 1, ex: 0 },
         orbit: () => (ctx.anchors.orbit ? anchorPose(ctx.anchors.orbit, 0.65) : { x: 0.4, y: 0, s: 0.6, shell: 1, op: 1, ex: 0 }),
         traj: () => (isMob() ? { x: 0.78, y: 0.78, s: 0.16, shell: 0.7, op: 0.6, ex: 0.3 } : { x: 0.86, y: 0.7, s: 0.2, shell: 0.7, op: 0.6, ex: 0.3 }),
         hello: () => (isMob() ? { x: 0.4, y: 0.5, s: 0.55, shell: 0, op: 0.9, ex: 1 } : { x: 0.62, y: 0.05, s: 0.95, shell: 0, op: 1, ex: 1 }),
@@ -306,6 +327,12 @@ export function createScene3D(ctx: MotionContext) {
       let introPose = false;
       const target = (y: number) => {
         introPose = !!root.dataset.intro;
+        if (introPose && introOverride) {
+          const { full, rate, ...pose } = introOverride;
+          void full;
+          void rate;
+          return { pose: pose as Pose, beat: 0 };
+        }
         if (introPose) return { pose: introPoseOf(), beat: 0 };
         let i = 0;
         while (i < marks.length - 1 && y >= marks[i + 1].c) i++;
@@ -331,10 +358,31 @@ export function createScene3D(ctx: MotionContext) {
         smoothY = scrollY,
         // star "warp" (1 -> 0): the galaxy rushes in at intro start
         warp = root.dataset.intro ? 1 : 0;
-      startIntro = () => {
+      let warpHold = false;
+      ctl.startIntro = () => {
         enter = 0;
         warp = 1;
       };
+      // transitions / the contact console kick the stars without cutting a stronger warp short
+      ctl.warp = (v) => {
+        warp = Math.max(warp, v);
+      };
+      // instant snap to a pose, no easing, no entrance scale
+      ctl.snap = (p) => {
+        (Object.keys(cur) as (keyof Pose)[]).forEach((key) => {
+          if (key in p) cur[key] = p[key];
+        });
+        enter = 1;
+      };
+      ctl.setWarp = (v, hold) => {
+        warp = v;
+        warpHold = hold;
+      };
+      ctl.release = () => {
+        warpHold = false;
+      };
+      ctl.heroPose = () => ({ ...POSES.hero(), full: 1 });
+      if (introOverride?.full) enter = 1;
       ctx.on(
         window,
         "pointermove",
@@ -379,12 +427,14 @@ export function createScene3D(ctx: MotionContext) {
         const on = motionOn();
         if (on) clock += 0.016 * k;
         if (introPose || (root.classList.contains("entered") && !root.dataset.intro)) enter += (1 - enter) * lerpK(introPose ? 0.022 : 0.035, k);
-        warp += (0 - warp) * lerpK(0.025, k);
+        const ip = introPose ? introOverride : null;
+        if (ip?.full) enter = 1;
+        if (!warpHold) warp += (0 - warp) * lerpK(0.025, k);
 
         vel += ((y - lastY) / k - vel) * lerpK(0.12, k);
         lastY = y;
         const T = target(y),
-          r = on ? lerpK(0.06, k) : 1;
+          r = on ? lerpK((introPose && introOverride?.rate) || 0.06, k) : 1;
         // smoothed scroll for rotations and parallax, so wheel steps never jolt the scene
         smoothY = smoothY + (y - smoothY) * (on ? lerpK(0.1, k) : 1);
         (Object.keys(T.pose) as (keyof Pose)[]).forEach((key) => (cur[key] += (T.pose[key] - cur[key]) * r));
@@ -427,9 +477,9 @@ export function createScene3D(ctx: MotionContext) {
         nodesMat.size = 0.07 + ex * 0.04;
         inner.rotation.set(clock * 0.8, clock * 1.1, 0);
         dust.rotation.y = clock * 0.02 + smoothY * 0.00015 + warp * 1.2;
-        dust.scale.setScalar(1 + warp * 2.5);
+        dust.scale.setScalar(Math.max(0.03, 1 + warp * 2.5));
         galaxy.forEach((g) => {
-          g.obj.scale.setScalar(1 + warp * 1.6);
+          g.obj.scale.setScalar(Math.max(0.03, 1 + warp * 1.6));
           g.obj.position.y = smoothY * g.k;
           g.obj.position.x = -P.x * g.k * 160;
           if (g.uT) g.uT.value = clock;
@@ -466,7 +516,19 @@ export function createScene3D(ctx: MotionContext) {
 
   return {
     ready,
-    /** Intro pose + star warp (the pose itself follows html[data-intro]). */
-    intro: (v: boolean) => v && startIntro(),
+    /** Galaxy intro pose + star warp (the pose itself follows html[data-intro]). */
+    intro: (v: boolean) => v && ctl.startIntro(),
+    /** Kick the star warp to at least v. */
+    warp: (v = 0.8) => ctl.warp(v),
+    /** Drive the orb directly during the intro (null hands back to the section poses); instant = snap. */
+    pose: (p: IntroPose | null, instant = false) => {
+      introOverride = p;
+      if (p && instant) ctl.snap(p);
+    },
+    /** Set the warp; hold keeps it from decaying until release(). */
+    setWarp: (v: number, hold = false) => ctl.setWarp(v, hold),
+    release: () => ctl.release(),
+    /** The hero pose (for the intro to sail to), or null before the scene exists. */
+    heroPose: () => ctl.heroPose(),
   };
 }

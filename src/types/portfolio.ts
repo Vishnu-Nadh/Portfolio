@@ -1,4 +1,4 @@
-export type NavTarget = "top" | "work" | "hello" | "contact";
+export type NavTarget = "top" | "skills" | "work" | "hello" | "contact";
 
 export interface Brand {
   /** Upright, uppercase part of the wordmark ("Vishnu"); its first letter sits in an accent box. */
@@ -81,5 +81,21 @@ export interface PortfolioData {
   };
   hello: { eyebrow: string; statement: string; stats: Stat[] };
   footer: { headline: string; cta: string; replay: string; toTop: string };
-  toasts: { contact: string };
+  /** "Transmission" contact console opened by the footer CTA. */
+  contact: {
+    eyebrow: string;
+    close: string;
+    title: string;
+    name: string;
+    email: string;
+    frequency: string;
+    topics: { value: string; label: string }[];
+    message: string;
+    meter: string;
+    submit: string;
+    submitCursor: string;
+    doneTitle: string;
+    doneText: string;
+    doneBack: string;
+  };
 }

@@ -1,5 +1,7 @@
 @use "abstracts" as *;
 
+/* Wormhole transition: a dark void opens from the click point while the page spirals into it,
+   the destination label resolves at the bottom, then a bright core flashes on the way out. */
 .trans {
   position: fixed;
   inset: 0;
@@ -7,22 +9,44 @@
   pointer-events: none;
   visibility: hidden;
 
-  &__bars { position: absolute; inset: 0; display: flex; }
+  &__void {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    clip-path: circle(0% at 50% 50%);
+    background: radial-gradient(ellipse at 50% 50%, #1c1030 0%, var(--bg) 55%, #050308 100%);
 
-  &__bar {
-    flex: 1;
-    height: 100%;
-    margin-right: -1px;
-    background: var(--accent);
-    transform: translateY(101%);
-    will-change: transform;
+    // dark throat at the centre, vignette at the edges
+    &::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 50%, rgba(5, 3, 8, 1) 0 3%, rgba(5, 3, 8, 0) 16%, rgba(5, 3, 8, 0) 50%, rgba(5, 3, 8, 0.9) 85%);
+    }
+  }
+
+  // white-hot exit mouth
+  &__core {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 3;
+    width: 22vmin;
+    height: 22vmin;
+    border-radius: 50%;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(circle, rgba(255, 236, 214, 0.7) 0%, rgba(255, 200, 150, 0.45) 16%, rgba(255, 140, 110, 0.3) 34%, rgba(200, 70, 140, 0.16) 52%, transparent 70%);
+    box-shadow: 0 0 120px 30px rgba(255, 77, 141, 0.12);
   }
 
   &__text {
     position: absolute;
+    z-index: 2;
     @include pinned-sides;
     @include safe-bottom($gutter);
-    color: var(--on-accent);
+    color: var(--text);
   }
 
   &__meta {
@@ -31,7 +55,7 @@
     gap: 16px;
     margin-bottom: 18px;
     @include mono-label;
-    opacity: 0;
+    color: var(--label);
   }
 
   &__label {
@@ -54,9 +78,9 @@
   }
 
   &__line {
-    height: 2px;
+    height: 1px;
     margin-top: 22px;
-    background: var(--on-accent);
+    background: var(--gradient);
     transform: scaleX(0);
     transform-origin: left;
   }

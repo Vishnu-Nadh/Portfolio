@@ -33,10 +33,17 @@ main { position: relative; z-index: 1; }
     radial-gradient(circle at 70% 75%, rgba(255, 181, 71, 0.35), transparent 45%),
     radial-gradient(circle at 45% 45%, rgba(255, 77, 141, 0.45), rgba(11, 8, 16, 0) 68%);
   filter: blur(2px);
-  opacity: 0.55;
-  transition: opacity 0.8s;
+  // hidden by default; only shown when WebGL is late (html.gl-late, set by the boot script)
+  opacity: 0;
+  transition: opacity 1.2s var(--ease-out);
+  animation: posterBreathe 7s ease-in-out infinite;
 
-  html[data-gl="on"] & { opacity: 0; }
+  html.gl-late:not([data-gl="on"]):not([data-intro]) & { opacity: 0.5; }
+  html[data-motion="off"] & { animation: none; }
 
   @include mobile { right: -20vw; top: 12vh; width: 90vw; }
+}
+
+@keyframes posterBreathe {
+  50% { transform: scale(1.06) translate(-1%, 1%); }
 }

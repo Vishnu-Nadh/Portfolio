@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import type { LeadSegment, PortfolioData } from "@/types/portfolio";
 
 type HeroProps = Pick<PortfolioData, "heroLines" | "hero">;
@@ -94,11 +95,12 @@ export function Hero({ heroLines, hero }: HeroProps) {
           ))}
         </div>
         <p className="hero__open eyebrow">
+          {/* bare text + <br>: each line is its own flex item (the <br>s are hidden by CSS) */}
           {hero.open.map((l, i) => (
-            <span key={i}>
+            <Fragment key={i}>
               {i > 0 && <br />}
               {l}
-            </span>
+            </Fragment>
           ))}
         </p>
       </div>

@@ -1,0 +1,98 @@
+@use "abstracts" as *;
+
+/* METEOR SCROLLBAR: the native bar is hidden; the rail is the trajectory, the thumb is a meteor.
+   Its tail stretches with scroll speed and points back along the path; the travelled path stays faintly burnt. */
+html { scrollbar-width: none; }
+html::-webkit-scrollbar,
+body::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+.mtr {
+  position: fixed;
+  z-index: 9400;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 22px;
+  touch-action: none;
+  cursor: grab;
+  opacity: 0.45;
+  transition: opacity 0.5s var(--ease-out);
+
+  &.is-live,
+  &:hover,
+  &.is-drag { opacity: 1; }
+  &.is-drag { cursor: grabbing; }
+
+  html[data-intro] & { opacity: 0; pointer-events: none; }
+
+  &__path {
+    position: absolute;
+    right: 10px;
+    top: 14px;
+    bottom: 14px;
+    width: 1px;
+    background: repeating-linear-gradient(180deg, rgba(246, 240, 244, 0.22) 0 1px, transparent 1px 7px);
+  }
+
+  &__burn {
+    position: absolute;
+    right: 10px;
+    top: 14px;
+    width: 1px;
+    height: 0;
+    background: linear-gradient(180deg, rgba(106, 61, 240, 0), rgba(106, 61, 240, 0.55) 40%, rgba(255, 77, 141, 0.7));
+  }
+
+  // meteor: zero-size anchor moved along the rail
+  &__m { position: absolute; right: 10.5px; top: 0; width: 0; height: 0; will-change: transform; }
+
+  &__tail {
+    position: absolute;
+    left: -1.5px;
+    bottom: 0;
+    width: 3px;
+    height: 40px;
+    border-radius: 3px;
+    transform-origin: 50% 100%;
+    will-change: transform, height;
+    background: linear-gradient(0deg, rgba(255, 246, 232, 1), rgba(255, 181, 71, 0.85) 18%, rgba(255, 77, 141, 0.55) 50%, rgba(106, 61, 240, 0));
+    filter: blur(0.4px);
+  }
+
+  &__head {
+    position: absolute;
+    left: -4px;
+    top: -4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 6px 2px rgba(255, 246, 232, 0.95), 0 0 16px 5px rgba(255, 181, 71, 0.7), 0 0 34px 10px rgba(255, 77, 141, 0.35);
+    transition: transform 0.3s var(--ease-out);
+  }
+
+  &:hover &__head,
+  &.is-drag &__head { transform: scale(1.35); }
+
+  &__spark {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    margin: -1px;
+    border-radius: 50%;
+    background: #ffd9a0;
+    pointer-events: none;
+    box-shadow: 0 0 4px rgba(255, 181, 71, 0.9);
+  }
+
+  // touch: a slim, display-only rail
+  @media (hover: none), (pointer: coarse) {
+    width: 10px;
+    pointer-events: none;
+
+    &__path { right: 4px; opacity: 0.6; }
+    &__burn { right: 4px; }
+    &__m { right: 4.5px; }
+    &__head { left: -3px; top: -3px; width: 6px; height: 6px; }
+  }
+}

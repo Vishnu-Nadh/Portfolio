@@ -1,13 +1,10 @@
-const BAR_COUNT = 5;
-
-/** Overlay used between in-page jumps; label characters are built at runtime. */
+/** Wormhole overlay between in-page jumps; label characters are built at runtime. */
 export function PageTransition() {
   return (
     <div className="trans" aria-hidden="true">
-      <div className="trans__bars">
-        {Array.from({ length: BAR_COUNT }, (_, i) => (
-          <div key={i} className="trans__bar" />
-        ))}
+      {/* the void opens from the click point; the core flashes on the way out */}
+      <div className="trans__void">
+        <div className="trans__core" />
       </div>
       <div className="trans__text">
         <div className="trans__meta">

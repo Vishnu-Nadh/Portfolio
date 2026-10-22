@@ -4,6 +4,8 @@ import { Toast } from "@/components/overlays/Toast";
 import { PageTransition } from "@/components/overlays/PageTransition";
 import { Intro } from "@/components/overlays/Intro";
 import { Scene3D } from "@/components/overlays/Scene3D";
+import { ContactConsole } from "@/components/overlays/ContactConsole";
+import { MeteorScrollbar } from "@/components/overlays/MeteorScrollbar";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Hero } from "@/components/sections/Hero";
@@ -32,11 +34,15 @@ export default function HomePage() {
         <OrbitSkills skills={data.skills} />
         <Trajectory experience={data.experience} />
         <Hello hello={data.hello} />
-        <Footer footer={data.footer} place={data.place} toasts={data.toasts} />
+        <Footer footer={data.footer} place={data.place} />
       </main>
 
       {/* the 3D stage sits under <main> (z-index 0 vs 1) */}
       <Scene3D />
+
+      {/* contact console (opened by the footer CTA) and the custom scrollbar */}
+      <ContactConsole contact={data.contact} />
+      <MeteorScrollbar />
 
       <MotionEngine data={data} />
     </>

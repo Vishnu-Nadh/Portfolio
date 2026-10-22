@@ -105,3 +105,54 @@ html[data-intro] header { opacity: 0; }
 .intro__box,
 .intro__meta,
 .intro__line { will-change: transform, opacity, filter; }
+
+/* PLANETRISE intro: a horizon draws across, the orb rises from behind it like a planet at dawn,
+   the name hangs below the horizon; the ground hides everything beneath the line. */
+.intro.v-c {
+  --hz: 62vh;
+
+  .intro__lock { position: absolute; z-index: 2; align-items: flex-start; padding-top: calc(var(--hz) + 3vh); }
+  .intro__logo { font-size: min(clamp(40px, 9vw, 150px), 15vh); }
+  .intro__meta { z-index: 2; }
+
+  @include mobile { --hz: 58vh; }
+}
+
+// layer added by the intro module, removed when it ends
+.ix { position: absolute; inset: 0; pointer-events: none; }
+
+.ix-ground { position: absolute; left: 0; right: 0; top: var(--hz); bottom: 0; background: linear-gradient(180deg, #060409, var(--bg) 70%); }
+
+.ix-refl {
+  position: absolute;
+  left: 50%;
+  top: var(--hz);
+  width: 60vw;
+  height: 30vh;
+  transform: translateX(-50%);
+  opacity: 0;
+  background: radial-gradient(ellipse 50% 60% at 50% 0%, rgba(255, 140, 110, 0.16), rgba(106, 61, 240, 0.08) 50%, transparent 75%);
+}
+
+.ix-hzglow {
+  position: absolute;
+  left: 50%;
+  top: var(--hz);
+  width: 80vw;
+  height: 22vh;
+  transform: translate(-50%, -100%);
+  opacity: 0;
+  background: radial-gradient(ellipse 50% 100% at 50% 100%, rgba(255, 140, 110, 0.22), rgba(255, 77, 141, 0.08) 45%, transparent 72%);
+}
+
+.ix-hz {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--hz);
+  height: 1px;
+  margin-top: -0.5px;
+  transform: scaleX(0);
+  background: linear-gradient(90deg, transparent, rgba(106, 61, 240, 0.55) 18%, rgba(255, 181, 71, 0.9) 50%, rgba(106, 61, 240, 0.55) 82%, transparent);
+  box-shadow: 0 0 14px 1px rgba(255, 77, 141, 0.35);
+}

@@ -21,5 +21,9 @@
 @use "components/hello";
 @use "components/footer";
 
+// overlays added over the page: contact console, meteor scrollbar
+@use "components/contact";
+@use "components/meteor";
+
 // 3D stage (after sections: main sits above the canvas)
 @use "components/scene3d";

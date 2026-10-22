@@ -24,12 +24,14 @@ The tokens are emitted as CSS custom properties on `:root`. The motion engine an
 
 | Section | What it does |
 | --- | --- |
-| Intro | Galaxy intro: the stars warp in, the orb condenses at the centre, the name surfaces through blur, then the page fades up. Plays once per session; click or Esc fast-forwards. |
+| Intro | Planetrise: a horizon draws across, the orb rises from behind it like a planet at dawn, the name drops out of the horizon, then the ground sinks away and the orb sails to the hero. Plays once per session; click or Esc fast-forwards. |
 | Hero | Kinetic name: each letter widens and thins near the pointer (Hubot Sans `wdth`/`wght`). The lead copy rises letter by letter. |
 | Skills | Pinned orbital system. Scroll turns the orbit, the front planet is the active skill, and clicking a planet jumps to it. The orb is the sun. |
 | Experience | Pinned trajectory. A probe travels oldest → newest past a station per role, with the camera trailing for parallax. |
 | About | Pinned "signal": the statement lights up word by word, then the stat lines fill. The orb drops its glass to show the wire core. |
-| Contact | "Event horizon": an accretion disk around the CTA, with the orb parked at its centre. |
+| Contact | "Event horizon": an accretion disk around the CTA, with the orb parked at its centre. The CTA opens the **Transmission** console, a glass form with validation, a signal-strength meter and a beam-of-light send. Sending is a placeholder: wire it to a form endpoint in `modules/contact.ts` (see the TODO). |
+| Navigation | Wormhole transition: the page spirals into the click point, the destination label resolves in the void, then it bursts back out. |
+| Scrollbar | Meteor: the native bar is hidden. The thumb is a meteor whose tail stretches with speed, and you can drag the rail. |
 
 ## Structure
 
@@ -40,7 +42,8 @@ src/
   components/
     layout/            Header, Footer (event horizon)
     sections/          Hero, OrbitSkills, Trajectory, Hello
-    overlays/          Cursor, Toast, PageTransition, Intro, Scene3D (canvas + poster)
+    overlays/          Cursor, Toast, PageTransition (wormhole), Intro, Scene3D (canvas + poster),
+                       ContactConsole, MeteorScrollbar
     ui/                Logo, SplitWords
     motion/            MotionEngine (the only client component)
   lib/motion/
@@ -56,12 +59,12 @@ src/
 
 ## Animation stack
 
-- **[three.js](https://threejs.org) 0.169**: the WebGL stage (glass shell with dispersion and iridescence, wire core, rings, dust, nebulae, twinkling star shader). It's loaded with a dynamic import and its shaders compile with `compileAsync`. The intro waits for the first frame (capped at 3s), and a CSS poster orb stands in until then or when WebGL is unavailable.
+- **[three.js](https://threejs.org) 0.169**: the WebGL stage (glass shell with dispersion and iridescence, wire core, rings, dust, nebulae, twinkling star shader). It's fetched as soon as the client bundle evaluates (the design preloads it), and its shaders compile with `compileAsync`. The intro's horizon draw covers the start-up; the planet rises once the first frame exists. If WebGL is late (over 1.4s) or unavailable, a CSS poster orb stands in.
 - **[Lenis](https://github.com/darkroomengineering/lenis) 1.3.15**: smooth scrolling, driven from the engine's ticker (`autoRaf: false`).
 - **Web Animations API**: intro, page transition, reveals, word cascade, letter entrances.
 - **A single `requestAnimationFrame` ticker** drives every per-frame module and the 3D render.
 - **IntersectionObserver**: reveals and counters. **CSS**: the disk spin (`@property --ang`), panel crossfades, hovers.
 
-Motion modules (`src/lib/motion/modules`): `smoothScroll`, `toast`, `clock`, `cursor`, `kineticType`, `logoFill`, `magnets`, `counters`, `reveals`, `signal`, `horizon`, `orbit`, `trajectory`, `pageTransition`, `navigation`, `motionToggle`, `intro`, `scene3d`.
+Motion modules (`src/lib/motion/modules`): `smoothScroll`, `toast`, `clock`, `cursor`, `kineticType`, `logoFill`, `magnets`, `counters`, `reveals`, `signal`, `horizon`, `orbit`, `trajectory`, `meteor`, `contact`, `pageTransition`, `navigation`, `motionToggle`, `intro`, `scene3d`.
 
 React renders all markup on the server from `portfolio.ts`. `MotionEngine` mounts the engine once on the client and tears it down cleanly (including the WebGL context), so it is safe under Strict Mode and HMR. Nothing re-renders during animation.

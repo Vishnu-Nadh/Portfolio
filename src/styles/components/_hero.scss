@@ -219,3 +219,35 @@
 }
 
 .hero__intro { text-shadow: 0 1px 18px rgba(11, 8, 16, 0.7); }
+
+/* refinement: the name dominates; the lead is a quiet caption; the skills strip becomes one light index line */
+.hero__intro { font-size: clamp(19px, calc(1.15vw + 4px), 22px) !important; line-height: 1.55 !important; color: var(--muted); max-width: 32em; }
+.hero__intro b { color: var(--text); font-weight: 500; }
+.hero__copy { max-width: 32em; }
+
+.hero__index {
+  display: flex !important;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 32px !important;
+  margin-top: clamp(12px, 2vh, 24px) !important;
+  padding-top: 14px;
+  border-top: 1px solid var(--hair);
+}
+.hero__skills { display: flex !important; flex-wrap: wrap; gap: 8px 28px; border-top: 0 !important; padding-top: 0 !important; }
+.hero__skill { flex-direction: row !important; padding: 0 !important; border: 0 !important; gap: 8px !important; align-items: center; }
+.hero__skill .eyebrow { display: none; }
+.hero__skill b { font-size: 11px !important; letter-spacing: 0.12em !important; color: var(--label); }
+// dot separators between skills
+.hero__skill + .hero__skill::before { content: ""; width: 3px; height: 3px; border-radius: 50%; background: var(--faint); margin-right: 20px; }
+
+// availability: one line behind a glowing amber dot
+.hero__open { display: flex; align-items: center; gap: 10px; border: 0 !important; padding: 0 !important; line-height: 1 !important; font-size: 11px; }
+.hero__open br { display: none; }
+.hero__open::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent-2); box-shadow: 0 0 10px var(--accent-2); }
+
+@include tablet {
+  .hero__skill + .hero__skill::before { margin-right: 14px; }
+  .hero__skills { gap: 8px 14px; }
+}
