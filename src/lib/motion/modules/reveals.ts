@@ -24,6 +24,13 @@ export function createReveals(ctx: MotionContext, counters: Counters) {
   const wordsIn = (p: HTMLElement) => {
     p.classList.add("is-in");
     if (!S.on) return;
+    // About + Contact: width changes re-wrap these headlines (and shift what sits beside them). Transform only here.
+    if (p.closest(".hello, .foot")) {
+      $$(".wd", p).forEach((w, i) =>
+        w.animate([{ transform: "translate3d(0,110%,0)" }, { transform: "none" }], { duration: 1100, delay: 30 * i, easing: ease.out, fill: "backwards" }),
+      );
+      return;
+    }
     $$(".wd", p).forEach((w, i) => {
       const rest = getComputedStyle(w).fontVariationSettings;
       w.animate(

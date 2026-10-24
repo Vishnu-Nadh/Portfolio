@@ -163,8 +163,8 @@ export function createMotionEngine(data: PortfolioData): () => void {
       enterPage();
     }
   };
-  // hero metrics need the real font, so wait for it (bounded) before the first reveal.
-  // The intro does not wait for the 3D stage: its horizon draw covers the stage's start-up.
+  // hero metrics need the real font, so wait for it (bounded). The intro does not wait for the 3D stage:
+  // the stage builds in the background (in small yielding steps) while the tagline plays.
   const ready = document.fonts?.ready ? Promise.race([document.fonts.ready, sleep(1800)]) : Promise.resolve();
   ready.then(() => {
     if (!ctx.flags.alive) return;

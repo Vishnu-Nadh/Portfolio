@@ -37,21 +37,29 @@ export function createScene3D(ctx: MotionContext) {
   // resolves after the first frame is drawn (or on failure), so the intro can start on a ready stage
   let markReady: () => void = () => {};
   const ready = new Promise<void>((r) => (markReady = r));
+  let pendingWarp: { v: number; hold: boolean } | null = null;
   // stage controls; real implementations are installed once the scene exists
   const ctl = {
     startIntro: () => {},
     warp: (v: number) => void v,
     snap: (p: IntroPose) => void p,
-    setWarp: (v: number, hold: boolean) => void [v, hold],
-    release: () => {},
+    // warp settings made before the scene exists are queued and applied when it starts
+    setWarp: (v: number, hold: boolean) => void (pendingWarp = { v, hold }),
+    release: () => void (pendingWarp && (pendingWarp.hold = false)),
     heroPose: (): IntroPose | null => null,
   };
   // pose the intro publishes; it can be set before the scene loads so the first frame already uses it
   let introOverride: IntroPose | null = null;
+  // Setup is split into small steps that each yield until after the next painted frame, so building the
+  // stage in the background never blocks the intro's animation for long.
+  const nextTask = () => new Promise<void>((r) => requestAnimationFrame(() => setTimeout(r, 0)));
 
   preloadThree()
     .then(async ([THREE, { mergeVertices }]) => {
       if (!ctx.flags.alive) return;
+      // User Timing marks (visible in DevTools > Performance) for each setup step
+      const mark = (n: string) => performance.mark("gl:" + n);
+      mark("three-loaded");
 
       const PINK = new THREE.Color(cssVar("--accent", "#ff4d8d")),
         AMBER = new THREE.Color(cssVar("--accent-2", "#ffb547")),
@@ -71,6 +79,14 @@ export function createScene3D(ctx: MotionContext) {
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.05;
       renderer.outputColorSpace = THREE.SRGBColorSpace;
+      mark("renderer");
+      // if the engine is torn down mid-setup, release the GL context straight away
+      const bail = () => {
+        renderer.dispose();
+        renderer.forceContextLoss();
+      };
+      await nextTask();
+      if (!ctx.flags.alive) return bail();
 
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
@@ -96,6 +112,9 @@ export function createScene3D(ctx: MotionContext) {
         scene.environment = pm.fromScene(env, 0.035).texture;
         pm.dispose();
       }
+      mark("environment");
+      await nextTask();
+      if (!ctx.flags.alive) return bail();
 
       const rig = new THREE.Group(),
         spin = new THREE.Group();
@@ -167,6 +186,10 @@ export function createScene3D(ctx: MotionContext) {
       ringA.rotation.set(1.2, 0.3, 0);
       ringB.rotation.set(-0.9, 0.6, 0.4);
       rig.add(ringA, ringB);
+
+      mark("orb-built");
+      await nextTask();
+      if (!ctx.flags.alive) return bail();
 
       /* dust for depth */
       const dust = (() => {
@@ -259,6 +282,10 @@ export function createScene3D(ctx: MotionContext) {
         layer(isMob() ? 300 : 560, -12, 14, 7, -60, 2.6, 0.0028);
       }
 
+      mark("galaxy-built");
+      await nextTask();
+      if (!ctx.flags.alive) return bail();
+
       const key = new THREE.PointLight(PINK, 30, 20);
       key.position.set(-3, 2, 4);
       scene.add(key);
@@ -282,8 +309,8 @@ export function createScene3D(ctx: MotionContext) {
         hello: () => (isMob() ? { x: 0.4, y: 0.5, s: 0.55, shell: 0, op: 0.9, ex: 1 } : { x: 0.62, y: 0.05, s: 0.95, shell: 0, op: 1, ex: 1 }),
         foot: () => (ctx.anchors.foot ? anchorPose(ctx.anchors.foot, 1) : { x: 0.5, y: 0, s: 0.4, shell: 1, op: 1, ex: 0 }),
       };
-      // centred while the intro plays
-      const introPoseOf = (): Pose => (isMob() ? { x: 0, y: 0.05, s: 0.85, shell: 1, op: 1, ex: 0 } : { x: 0, y: 0.02, s: 1.15, shell: 1, op: 1, ex: 0 });
+      // while the intro plays and before it publishes a pose: a point at the centre (the tagline intro blooms it later)
+      const introPoseOf = (): Pose => ({ x: 0, y: 0, s: 0.001, shell: 1, op: 1, ex: 0 });
       const SECS = (
         [
           ["hero", ".hero"],
@@ -383,6 +410,10 @@ export function createScene3D(ctx: MotionContext) {
       };
       ctl.heroPose = () => ({ ...POSES.hero(), full: 1 });
       if (introOverride?.full) enter = 1;
+      if (pendingWarp) {
+        warp = pendingWarp.v;
+        warpHold = pendingWarp.hold;
+      }
       ctx.on(
         window,
         "pointermove",
@@ -414,12 +445,30 @@ export function createScene3D(ctx: MotionContext) {
         shellGeo.computeVertexNormals();
       };
 
-      // compile shaders off the main thread where supported, so the first frame doesn't stall the page
-      await renderer.compileAsync(scene, camera).catch(() => {});
-      if (!ctx.flags.alive) {
-        renderer.dispose();
-        return;
+      // Compile shaders one top-level object at a time. Where KHR_parallel_shader_compile exists this happens
+      // off the main thread; elsewhere the blocking work is at least spread across frames.
+      for (const obj of [...scene.children]) {
+        await renderer.compileAsync(obj, camera, scene).catch(() => {});
+        mark("compiled:" + (obj.type || "object"));
+        await nextTask();
+        if (!ctx.flags.alive) return bail();
       }
+      // Warm-up draws, one object per frame (sub-pixel orb, behind the still-transparent canvas). Some drivers only
+      // link a shader on its first draw; drawing each object alone spreads that cost over several frames, and it
+      // also allocates the glass's transmission target and uploads every buffer, so the bloom later costs nothing.
+      rig.scale.setScalar(0.001);
+      const solo = [...scene.children].filter((o) => !(o as { isLight?: boolean }).isLight);
+      for (const obj of solo) {
+        solo.forEach((o) => (o.visible = o === obj));
+        renderer.render(scene, camera);
+        await nextTask();
+        if (!ctx.flags.alive) return bail();
+      }
+      solo.forEach((o) => (o.visible = true));
+      renderer.render(scene, camera);
+      mark("warm-up");
+      await nextTask();
+      if (!ctx.flags.alive) return bail();
 
       let shown = false,
         fadeTimer = 0;
@@ -446,7 +495,10 @@ export function createScene3D(ctx: MotionContext) {
         const ease = 1 - Math.pow(1 - Math.min(1, enter), 3);
         rig.position.x = cur.x * hw + P.x * 0.12;
         rig.position.y = cur.y * hh - P.y * 0.08 - (1 - ease) * 0.8;
-        rig.scale.setScalar(Math.max(0.001, cur.s * (0.15 + 0.85 * ease)));
+        const rigScale = Math.max(0.001, cur.s * (0.15 + 0.85 * ease));
+        rig.scale.setScalar(rigScale);
+        // a sub-pixel orb (intro start) isn't drawn at all: no glass refraction pass, no rings
+        rig.visible = rigScale > 0.004;
 
         // pointer proximity on the projected centre: the glass swells when you reach it
         proj.copy(rig.position).project(camera);
@@ -458,7 +510,7 @@ export function createScene3D(ctx: MotionContext) {
         P.near += ((nearNow ? 1 : 0) - P.near) * lerpK(0.08, k);
 
         sv += (Math.min(1, Math.abs(vel) / 60) - sv) * lerpK(0.04, k);
-        if (on && shell.visible) displace(clock, 0.05 + 0.08 * P.near + 0.06 * sv);
+        if (on && rig.visible && shell.visible) displace(clock, 0.05 + 0.08 * P.near + 0.06 * sv);
 
         spin.rotation.y = clock * 0.22 + P.x * 0.5 + smoothY * 0.0009;
         spin.rotation.x = clock * 0.11 - P.y * 0.35;

@@ -29,7 +29,7 @@
     letter-spacing: -0.02em;
     font-variation-settings: "wdth" 80, "wght" 650;
 
-    .wd { transition: opacity 0.25s linear; }
+    .wd { transition: opacity 0.25s linear; backface-visibility: hidden; }
   }
 
   &__stats {
@@ -50,6 +50,10 @@
 
 // the pin's vertical padding is fixed at every width
 .hello__pin { padding-top: 72px !important; padding-bottom: 28px !important; }
+
+// keep the statement steady: isolate the pinned panel and reserve three lines so wrapping can't shift it
+.hello__pin { contain: layout paint; transform: translateZ(0); }
+.hello__text { min-height: calc(3 * 0.98em); }
 
 html[data-js] .hello__text .wd { opacity: var(--lit, 1); }
 

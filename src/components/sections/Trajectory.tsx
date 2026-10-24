@@ -20,7 +20,8 @@ export function Trajectory({ experience }: Props) {
             ({experience.title} {pad2(items.length)})
           </h2>
           <span className="work__head-end">
-            <button type="button" className="work__pause" data-pause="">
+            {/* hidden in the design; still wired to the motion toggle */}
+            <button type="button" className="work__pause" data-pause="" hidden tabIndex={-1} aria-hidden="true">
               {experience.pause}
             </button>
             <span>{experience.years}</span>

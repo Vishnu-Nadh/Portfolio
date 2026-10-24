@@ -106,53 +106,126 @@ html[data-intro] header { opacity: 0; }
 .intro__meta,
 .intro__line { will-change: transform, opacity, filter; }
 
-/* PLANETRISE intro: a horizon draws across, the orb rises from behind it like a planet at dawn,
-   the name hangs below the horizon; the ground hides everything beneath the line. */
-.intro.v-c {
-  --hz: 62vh;
-
-  .intro__lock { position: absolute; z-index: 2; align-items: flex-start; padding-top: calc(var(--hz) + 3vh); }
-  .intro__logo { font-size: min(clamp(40px, 9vw, 150px), 15vh); }
-  .intro__meta { z-index: 2; }
-
-  @include mobile { --hz: 58vh; }
-}
+/* TAGLINE-FIRST intro (galaxy): each word begins as a star, a constellation links them, a comet ignites the
+   words as it passes and "open." stays hollow and breathes. Then the words drift to the centre out of focus
+   and a point there blooms into the orb. No logo: the lockup is hidden; role, place and counter stay. */
+.intro.v-d .intro__lock { visibility: hidden; }
 
 // layer added by the intro module, removed when it ends
 .ix { position: absolute; inset: 0; pointer-events: none; }
 
-.ix-ground { position: absolute; left: 0; right: 0; top: var(--hz); bottom: 0; background: linear-gradient(180deg, #060409, var(--bg) 70%); }
-
-.ix-refl {
-  position: absolute;
-  left: 50%;
-  top: var(--hz);
-  width: 60vw;
-  height: 30vh;
-  transform: translateX(-50%);
-  opacity: 0;
-  background: radial-gradient(ellipse 50% 60% at 50% 0%, rgba(255, 140, 110, 0.16), rgba(106, 61, 240, 0.08) 50%, transparent 75%);
-}
-
-.ix-hzglow {
-  position: absolute;
-  left: 50%;
-  top: var(--hz);
-  width: 80vw;
-  height: 22vh;
-  transform: translate(-50%, -100%);
-  opacity: 0;
-  background: radial-gradient(ellipse 50% 100% at 50% 100%, rgba(255, 140, 110, 0.22), rgba(255, 77, 141, 0.08) 45%, transparent 72%);
-}
-
-.ix-hz {
+.ix-tag {
   position: absolute;
   left: 0;
   right: 0;
-  top: var(--hz);
-  height: 1px;
-  margin-top: -0.5px;
-  transform: scaleX(0);
-  background: linear-gradient(90deg, transparent, rgba(106, 61, 240, 0.55) 18%, rgba(255, 181, 71, 0.9) 50%, rgba(106, 61, 240, 0.55) 82%, transparent);
-  box-shadow: 0 0 14px 1px rgba(255, 77, 141, 0.35);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.04em;
+  padding: 0 6vw;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: min(clamp(40px, 8.4vw, 150px), 15vh);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.ix-row { display: flex; flex-wrap: wrap; justify-content: center; column-gap: 0.24em; }
+
+// word mask (padding/negative margin give descenders and blur room without shifting layout)
+.ix-w { display: inline-block; overflow: hidden; padding: 0.06em 0.02em 0.1em; margin: -0.06em -0.02em -0.1em; will-change: transform, opacity, filter; }
+.ix-wi { display: inline-block; will-change: transform, filter; }
+.ix-w--hollow .ix-wi { color: transparent; -webkit-text-stroke: 1.5px var(--accent); text-shadow: 0 0 40px rgba(255, 77, 141, 0.35); }
+
+.ix-sub { margin-top: 3.2vh; @include mono-label(12px, 0.14em); color: var(--label); opacity: 0; }
+
+// constellation linking the word stars
+.ix-const { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ix-const polyline { fill: none; stroke: rgba(246, 240, 244, 0.32); stroke-width: 1; stroke-linejoin: round; stroke-linecap: round; }
+
+.ix-star {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0;
+  box-shadow: 0 0 6px 2px rgba(255, 246, 232, 0.9), 0 0 18px 6px rgba(255, 181, 71, 0.35);
+}
+
+// comet: zero-size anchor; ::before is the tail, ::after the glowing head
+.ix-comet {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  opacity: 0;
+
+  &::before {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: -1.5px;
+    width: min(36vw, 420px);
+    height: 3px;
+    border-radius: 3px;
+    background: linear-gradient(90deg, rgba(106, 61, 240, 0), rgba(255, 77, 141, 0.45) 55%, rgba(255, 181, 71, 0.85) 88%, #fff);
+    filter: blur(0.5px);
+  }
+
+  &::after {
+    content: "";
+    position: absolute;
+    left: -5px;
+    top: -5px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 10px 4px rgba(255, 246, 232, 0.95), 0 0 34px 12px rgba(255, 181, 71, 0.5), 0 0 80px 24px rgba(255, 77, 141, 0.25);
+  }
+}
+
+// ignition: the point that gathers at the centre, its flash and two shockwaves
+.ix-pt {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0;
+  box-shadow: 0 0 10px 3px rgba(255, 246, 232, 0.9), 0 0 36px 12px rgba(255, 181, 71, 0.45), 0 0 80px 26px rgba(255, 77, 141, 0.25);
+}
+
+.ix-shock {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 30vmax;
+  height: 30vmax;
+  margin: -15vmax 0 0 -15vmax;
+  border-radius: 50%;
+  opacity: 0;
+  border: 1px solid rgba(255, 214, 170, 0.7);
+  box-shadow: 0 0 30px rgba(255, 77, 141, 0.35), inset 0 0 40px rgba(106, 61, 240, 0.3);
+}
+.ix-shock--2 { border-color: rgba(160, 120, 255, 0.5); }
+
+.ix-flash {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 60vmax;
+  height: 60vmax;
+  margin: -30vmax 0 0 -30vmax;
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(circle, rgba(255, 220, 190, 0.22), rgba(255, 77, 141, 0.08) 35%, transparent 65%);
 }

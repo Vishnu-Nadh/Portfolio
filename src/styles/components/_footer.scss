@@ -26,6 +26,8 @@
     letter-spacing: -0.02em;
     font-variation-settings: "wdth" 75, "wght" 780;
     max-width: 12ch;
+
+    .wd { backface-visibility: hidden; }
   }
 
   &__bar {

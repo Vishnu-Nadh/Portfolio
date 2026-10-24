@@ -81,6 +81,8 @@ export interface PortfolioData {
   };
   hello: { eyebrow: string; statement: string; stats: Stat[] };
   footer: { headline: string; cta: string; replay: string; toTop: string };
+  /** Intro tagline: rows of words; hollow words render as an accent outline that breathes. */
+  intro: { tagline: { text: string; hollow?: boolean }[][]; sub: string };
   /** "Transmission" contact console opened by the footer CTA. */
   contact: {
     eyebrow: string;

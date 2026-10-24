@@ -89,6 +89,9 @@
     align-self: center;
   }
 
+  // the first letter's box lets its glyph overflow instead of clipping it
+  &__box { line-height: 1; overflow: visible; }
+
   &__fill {
     position: absolute;
     inset: 0;

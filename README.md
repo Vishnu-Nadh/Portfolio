@@ -24,7 +24,7 @@ The tokens are emitted as CSS custom properties on `:root`. The motion engine an
 
 | Section | What it does |
 | --- | --- |
-| Intro | Planetrise: a horizon draws across, the orb rises from behind it like a planet at dawn, the name drops out of the horizon, then the ground sinks away and the orb sails to the hero. Plays once per session; click or Esc fast-forwards. |
+| Intro | Tagline first: each word of the tagline (in `portfolio.ts` under `intro`) starts as a star linked by a constellation. A comet ignites the words as it passes, and the hollow word breathes. The words then drift to the centre out of focus, a point blooms into the orb, and the orb glides to the hero. Plays once per session; click or Esc fast-forwards. |
 | Hero | Kinetic name: each letter widens and thins near the pointer (Hubot Sans `wdth`/`wght`). The lead copy rises letter by letter. |
 | Skills | Pinned orbital system. Scroll turns the orbit, the front planet is the active skill, and clicking a planet jumps to it. The orb is the sun. |
 | Experience | Pinned trajectory. A probe travels oldest → newest past a station per role, with the camera trailing for parallax. |
@@ -59,7 +59,7 @@ src/
 
 ## Animation stack
 
-- **[three.js](https://threejs.org) 0.169**: the WebGL stage (glass shell with dispersion and iridescence, wire core, rings, dust, nebulae, twinkling star shader). It's fetched as soon as the client bundle evaluates (the design preloads it), and its shaders compile with `compileAsync`. The intro's horizon draw covers the start-up; the planet rises once the first frame exists. If WebGL is late (over 1.4s) or unavailable, a CSS poster orb stands in.
+- **[three.js](https://threejs.org) 0.169**: the WebGL stage (glass shell with dispersion and iridescence, wire core, rings, dust, nebulae, twinkling star shader). It's fetched as soon as the client bundle evaluates (the design preloads it), and its shaders compile with `compileAsync`. The intro starts straight away and the stage builds in the background while the tagline plays. Setup runs in small steps that yield between frames, shaders compile object by object with `compileAsync`, and a per-object warm-up draw pre-links shaders and allocates the glass refraction target, so the orb's bloom is smooth. Setup steps show as `gl:*` marks in DevTools > Performance. If WebGL is late (over 1.4s) or unavailable, a CSS poster orb stands in.
 - **[Lenis](https://github.com/darkroomengineering/lenis) 1.3.15**: smooth scrolling, driven from the engine's ticker (`autoRaf: false`).
 - **Web Animations API**: intro, page transition, reveals, word cascade, letter entrances.
 - **A single `requestAnimationFrame` ticker** drives every per-frame module and the 3D render.

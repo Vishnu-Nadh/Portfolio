@@ -1,7 +1,7 @@
 import type { MotionContext } from "../context";
 import type { Cursor } from "./cursor";
 import type { SmoothScroll } from "./smoothScroll";
-import type { IntroPose, Stage } from "./scene3d";
+import type { Stage } from "./scene3d";
 import { $, $$, sleep } from "../utils";
 
 export const INTRO_SEEN_KEY = "folio-intro";
@@ -12,14 +12,14 @@ const SOFT = "cubic-bezier(.22,1,.36,1)";
 const HH = Math.tan((16 * Math.PI) / 180) * 9;
 /** orb scale for an on-screen radius in px (shell radius 1.25) */
 const scaleFor = (rPx: number) => ((rPx / (innerHeight / 2)) * HH) / 1.25;
-/** pose y for a screen y in px */
-const yFor = (py: number) => (0.5 - py / innerHeight) * 2;
+/** out-curve for the ignition burst */
+const OUTE = "cubic-bezier(.16,1,.3,1)";
 
 /**
- * Planetrise intro: a horizon draws across the screen; the orb rises from behind it like a planet at dawn,
- * lighting the horizon and casting a faint reflection on the ground, while the name hangs below the horizon,
- * emerging downward from it and a counter runs to 100. On exit the name retracts, the ground sinks away and
- * the orb sails to its hero pose as the page fades up. Click / Esc fast-forwards (4x).
+ * Tagline-first intro (galaxy): each word of the tagline begins as a star and a constellation links them; a comet
+ * sweeps across and ignites the words as it passes, and the hollow word ("open.") breathes. Then the line fades,
+ * the words drift toward the centre out of focus, a point gathers there and blooms softly into the orb, which
+ * glides on to its hero pose as the page fades up. No logo. Click / Esc fast-forwards (4x).
  */
 export function createIntro(ctx: MotionContext, cursor: Cursor, scroll: SmoothScroll, stage: Stage, enterPage: () => void) {
   const { S, flags, root, ease } = ctx;
@@ -88,13 +88,6 @@ export function createIntro(ctx: MotionContext, cursor: Cursor, scroll: SmoothSc
         };
         requestAnimationFrame(step);
       });
-    // resolves once the 3D stage has drawn a frame (or after ms)
-    const glReady = (ms: number) =>
-      new Promise<void>((res) => {
-        const t0 = performance.now();
-        const chk = () => (root.dataset.gl === "on" || performance.now() - t0 > ms || !flags.alive ? res() : requestAnimationFrame(chk));
-        chk();
-      });
     const speedUp = () => {
       if (rate !== 1) return;
       rate = 4;
@@ -112,69 +105,172 @@ export function createIntro(ctx: MotionContext, cursor: Cursor, scroll: SmoothSc
       window.removeEventListener("keydown", onKey);
     };
     ctx.cleanup(detach);
-    intro.className = "intro v-c";
+    intro.className = "intro v-d";
 
-    /* ---------- planetrise ---------- */
+    /* ---------- tagline first ---------- */
+    // The orb starts as a hidden point at the centre and blooms there later. The 3D stage keeps building in
+    // the background while the tagline plays (it yields between steps), so it is ready by the bloom.
+    const point = { x: 0, y: 0, s: 0.001, shell: 1, op: 1, ex: 0, full: 1 };
+    stage.pose(point, true);
+    // stars held at a gentle warp through the tagline (queued if the stage is still building)
+    stage.setWarp(0.25, true);
     const W = innerWidth,
       H = innerHeight,
       mob = W <= 700;
-    const HZ = H * (mob ? 0.58 : 0.62),
-      R = Math.min(H * (mob ? 0.14 : 0.17), W * 0.26);
-    // published before the 3D layer draws, so its very first frame already sits fully below the horizon;
-    // 1.8R clears the orbit rings (they reach ~1.64R), so no ring edge peeks over the line
-    const start: IntroPose = { x: 0, y: yFor(HZ + R * 1.8 + 12), s: scaleFor(R), shell: 1, op: 1, ex: 0, full: 1 };
-    stage.pose(start);
+    const mk = (parent: HTMLElement, cls: string) => {
+      const d = document.createElement("div");
+      d.className = cls;
+      parent.append(d);
+      return d;
+    };
     const layer = document.createElement("div");
     layer.className = "ix";
     intro.insertBefore(layer, bg.nextSibling);
-    const mk = (cls: string) => {
-      const d = document.createElement("div");
-      d.className = cls;
-      layer.append(d);
-      return d;
-    };
-    const glow = mk("ix-hzglow"),
-      ground = mk("ix-ground"),
-      refl = mk("ix-refl"),
-      hz = mk("ix-hz");
-    [...letters, box].forEach((n) => (n.style.opacity = "0"));
-    play(hz, [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }], { duration: 1100, delay: 200, easing: ease.io, fill: "both" });
-    play(meta, [{ opacity: 0, transform: "translateY(12px)" }, { opacity: 1, transform: "none" }], { duration: 900, delay: 400, easing: SOFT, fill: "both" });
-    countTo(5000);
-    await Promise.race([stage.ready, sleep(4000)]);
-    if (!flags.alive) return;
-    stage.setWarp(0.6, false);
-    stage.pose(start, true);
-    // the horizon draw covers 3D start-up; the planet only rises once a real frame has rendered
-    await Promise.all([wait(900), glReady(4000)]);
-    if (!flags.alive) return;
-    stage.pose({ x: 0, y: yFor(Math.max(H * 0.1 + R, HZ - R - H * (mob ? 0.08 : 0.12))), s: scaleFor(R), shell: 1, op: 1, ex: 0, full: 1, rate: 0.03 });
-    play(glow, [{ opacity: 0 }, { opacity: 1 }], { duration: 1800, delay: 200, easing: SOFT, fill: "both" });
-    play(refl, [{ opacity: 0 }, { opacity: 1 }], { duration: 2000, delay: 500, easing: SOFT, fill: "both" });
-    await wait(900);
-    if (!flags.alive) return;
-    // the name emerges downward out of the horizon
-    letters.forEach((l, i) => {
-      l.style.opacity = "";
-      play(l, [{ transform: "translateY(-115%)" }, { transform: "none" }], { duration: 1100, delay: 45 * i, easing: SOFT, fill: "both" });
-      play(l, [{ fontVariationSettings: '"wdth" 125, "wght" 150' }, { fontVariationSettings: restFvs(!!l.dataset.italic) }], { duration: 1400, delay: 45 * i, easing: SOFT, fill: "both" });
+    const tag = mk(layer, "ix-tag");
+    const words: HTMLElement[] = [];
+    ctx.data.intro.tagline.forEach((row) => {
+      const r = mk(tag, "ix-row");
+      row.forEach((w) => {
+        const o = document.createElement("span"),
+          i = document.createElement("span");
+        o.className = w.hollow ? "ix-w ix-w--hollow" : "ix-w";
+        i.className = "ix-wi";
+        i.textContent = w.text;
+        i.style.fontVariationSettings = restFvs(false);
+        o.append(i);
+        r.append(o);
+        words.push(o);
+      });
     });
-    play(box, [{ transform: "translateY(-120%)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 1100, delay: 180, easing: SOFT, fill: "both" });
-    await wait(2300);
+    const sub = mk(tag, "ix-sub");
+    sub.textContent = ctx.data.intro.sub;
+    const inner = (o: HTMLElement) => o.firstElementChild as HTMLElement;
+    [...letters, box].forEach((n) => (n.style.opacity = "0"));
+    words.forEach((o) => (inner(o).style.opacity = "0"));
+    play(meta, [{ opacity: 0 }, { opacity: 1 }], { duration: 900, delay: 300, easing: SOFT, fill: "both" });
+    countTo(6400);
+
+    // word centres (layout is final; words are only visually hidden)
+    const pts = words.map((o) => {
+      const r = o.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height * 0.52 };
+    });
+    const cx = W / 2,
+      cy = H / 2;
+
+    /* 1. stars + constellation */
+    const NS = "http://www.w3.org/2000/svg",
+      svg = document.createElementNS(NS, "svg");
+    svg.setAttribute("class", "ix-const");
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    layer.append(svg);
+    const pl = document.createElementNS(NS, "polyline");
+    pl.setAttribute("points", pts.map((q) => q.x.toFixed(1) + "," + q.y.toFixed(1)).join(" "));
+    svg.append(pl);
+    const len = pts.reduce((acc, q, i) => (i ? acc + Math.hypot(q.x - pts[i - 1].x, q.y - pts[i - 1].y) : 0), 0);
+    pl.style.strokeDasharray = `${len} ${len}`;
+    pl.style.strokeDashoffset = String(len);
+    const stars = pts.map((q, i) => {
+      const st = mk(layer, "ix-star");
+      st.style.left = q.x + "px";
+      st.style.top = q.y + "px";
+      st.style.zIndex = "2";
+      play(
+        st,
+        [
+          { transform: "translate(-50%,-50%) scale(0)", opacity: 0 },
+          { transform: "translate(-50%,-50%) scale(1.6)", opacity: 1, offset: 0.6 },
+          { transform: "translate(-50%,-50%) scale(1)", opacity: 1 },
+        ],
+        { duration: 600, delay: 150 + 120 * i, easing: SOFT, fill: "both" },
+      );
+      return st;
+    });
+    play(pl as unknown as HTMLElement, [{ strokeDashoffset: len }, { strokeDashoffset: 0 }], { duration: 1100, delay: 300, easing: ease.io, fill: "forwards" });
+    await wait(1250);
     if (!flags.alive) return;
-    // the name retracts back into the horizon
-    letters.forEach((l, i) => play(l, [{ transform: "none" }, { transform: "translateY(-115%)" }], { duration: 650, delay: 18 * i, easing: ease.io, fill: "forwards" }));
-    play(box, [{ transform: "none", opacity: 1 }, { transform: "translateY(-120%)", opacity: 0 }], { duration: 650, easing: ease.io, fill: "forwards" });
+
+    /* 2. a comet sweeps across and ignites each word as it passes */
+    const comet = mk(layer, "ix-comet");
+    const x0 = -W * 0.15,
+      x1 = W * 1.15,
+      y0 = cy + H * 0.12,
+      y1 = cy - H * 0.12,
+      CD = 1500;
+    const ang = (Math.atan2(y1 - y0, x1 - x0) * 180) / Math.PI;
+    play(
+      comet,
+      [
+        { transform: `translate(${x0}px,${y0}px) rotate(${ang}deg)`, opacity: 0 },
+        { opacity: 1, offset: 0.08 },
+        { opacity: 1, offset: 0.9 },
+        { transform: `translate(${x1}px,${y1}px) rotate(${ang}deg)`, opacity: 0 },
+      ],
+      { duration: CD, easing: "linear", fill: "forwards" },
+    );
+    words.forEach((o, i) => {
+      const w = inner(o),
+        t = Math.max(0, (pts[i].x - x0) / (x1 - x0)) * CD; // when the comet reaches this word
+      play(w, [{ transform: "scale(.25)", filter: "blur(14px)", opacity: 0 }, { opacity: 1, offset: 0.3 }, { transform: "none", filter: "blur(0px)", opacity: 1 }], { duration: 1000, delay: t, easing: SOFT, fill: "both" });
+      play(w, [{ fontVariationSettings: '"wdth" 125, "wght" 150' }, { fontVariationSettings: restFvs(false) }], { duration: 1400, delay: t, easing: SOFT, fill: "both" });
+      play(stars[i], [{ transform: "translate(-50%,-50%) scale(1)", opacity: 1 }, { transform: "translate(-50%,-50%) scale(3)", opacity: 0 }], { duration: 700, delay: t, easing: SOFT, fill: "forwards" });
+    });
+    play(svg as unknown as HTMLElement, [{ opacity: 1 }, { opacity: 0.35 }], { duration: 900, delay: 900, fill: "forwards" });
+    play(sub, [{ opacity: 0, letterSpacing: ".5em" }, { opacity: 1, letterSpacing: ".14em" }], { duration: 1200, delay: CD * 0.75, easing: SOFT, fill: "both" });
+    const hollow = words.find((o) => o.classList.contains("ix-w--hollow"));
+    if (hollow)
+      play(inner(hollow), [{ textShadow: "0 0 18px rgba(255,77,141,.25)" }, { textShadow: "0 0 46px rgba(255,77,141,.6)" }, { textShadow: "0 0 18px rgba(255,77,141,.25)" }], {
+        duration: 1800,
+        delay: CD,
+        iterations: 2,
+        easing: "ease-in-out",
+      });
+    await wait(CD + 1300);
+    if (!flags.alive) return;
+
+    /* 3. release: the line fades, the words ease toward the centre and dissolve out of focus */
+    stage.setWarp(-0.3, true);
+    const DR = 1300,
+      EZ = "cubic-bezier(.45,0,.2,1)";
+    play(svg as unknown as HTMLElement, [{ opacity: 0.35 }, { opacity: 0 }], { duration: 700, easing: EZ, fill: "forwards" });
+    [...words, sub].forEach((o, i) => {
+      const r = o.getBoundingClientRect(),
+        dx = (cx - r.left - r.width / 2) * 0.55,
+        dy = (cy - r.top - r.height / 2) * 0.55;
+      o.style.overflow = "visible";
+      play(o, [{ transform: "none", opacity: 1, filter: "blur(0px)" }, { transform: `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) scale(.72)`, opacity: 0, filter: "blur(14px)" }], {
+        duration: DR,
+        delay: 40 * i,
+        easing: EZ,
+        fill: "forwards",
+      });
+    });
+    const core = mk(layer, "ix-pt");
+    play(core, [{ transform: "translate(-50%,-50%) scale(0)", opacity: 0 }, { transform: "translate(-50%,-50%) scale(1.4)", opacity: 1 }], { duration: 1000, delay: 450, easing: SOFT, fill: "both" });
+    await wait(1450);
+    if (!flags.alive) return;
+
+    /* 4. ignition: soft shockwave, stars released, the orb blooms at the centre.
+       Normally the stage finished building long ago; on a slow device the gathered point keeps glowing
+       for up to 2.5s more rather than blooming into nothing. */
+    await Promise.race([stage.ready, sleep(2500)]);
+    if (!flags.alive) return;
+    stage.release();
+    const fl = mk(layer, "ix-flash"),
+      s1 = mk(layer, "ix-shock"),
+      s2 = mk(layer, "ix-shock ix-shock--2");
+    play(core, [{ transform: "translate(-50%,-50%) scale(1.4)", opacity: 1 }, { transform: "translate(-50%,-50%) scale(5)", opacity: 0 }], { duration: 700, easing: OUTE, fill: "forwards" });
+    play(fl, [{ transform: "scale(.1)", opacity: 0 }, { opacity: 0.8, offset: 0.15 }, { transform: "scale(1.3)", opacity: 0 }], { duration: 1500, easing: OUTE, fill: "forwards" });
+    play(s1, [{ transform: "scale(.02)", opacity: 0.9 }, { transform: "scale(3.6)", opacity: 0 }], { duration: 1500, easing: OUTE, fill: "forwards" });
+    play(s2, [{ transform: "scale(.02)", opacity: 0.7 }, { transform: "scale(2.4)", opacity: 0 }], { duration: 1700, delay: 120, easing: OUTE, fill: "forwards" });
+    stage.pose({ x: 0, y: 0, s: scaleFor(Math.min(H * (mob ? 0.16 : 0.2), W * 0.28)), shell: 1, op: 1, ex: 0, full: 1, rate: 0.08 });
+    await wait(1300);
+    if (!flags.alive) return;
+
+    /* 5. the orb glides on to its hero pose */
     play(meta, [{ opacity: 1 }, { opacity: 0 }], { duration: 400, fill: "forwards" });
-    await wait(450);
-    if (!flags.alive) return;
-    // the ground sinks away and the orb sails to its hero pose
     stage.pose(stage.heroPose());
-    play(ground, [{ transform: "none", opacity: 1 }, { transform: "translateY(45%)", opacity: 0 }], { duration: 900, easing: ease.io, fill: "forwards" });
-    play(refl, [{ opacity: 1 }, { opacity: 0 }], { duration: 500, fill: "forwards" });
-    play(hz, [{ transform: "scaleX(1)", opacity: 1 }, { transform: "scaleX(1.6) translateY(30vh)", opacity: 0 }], { duration: 900, easing: ease.io, fill: "forwards" });
-    play(glow, [{ opacity: 1 }, { opacity: 0 }], { duration: 700, fill: "forwards" });
-    await wait(700);
+    await wait(600);
     if (!flags.alive) return;
 
     /* ---------- handoff: the page fades up underneath ---------- */

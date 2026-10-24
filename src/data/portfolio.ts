@@ -103,6 +103,14 @@ export const portfolio: PortfolioData = {
     toTop: "Back to top ↑",
   },
 
+  intro: {
+    tagline: [
+      [{ text: "Bold" }, { text: "ideas," }],
+      [{ text: "built" }, { text: "in" }, { text: "the" }, { text: "open.", hollow: true }],
+    ],
+    sub: "Developer · Designer",
+  },
+
   contact: {
     eyebrow: "(Transmission)",
     close: "Close ✕",
